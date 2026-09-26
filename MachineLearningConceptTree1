@@ -1,0 +1,16 @@
+                            // ************           Instance vs Model Based Machine learning             ************
+
+// Instance Based 
+
+Here model checks the similarity score of its nearest negihbours to classify its position , therefore we need to maintained trained data so new point will use its nearest points in the trained data
+to cassify itself ex: KNN ... etc
+
+// model Based
+
+Here model uses trained data to derive a equation and therefore divides according to equation and whenever a new point comes it uses equation and reaches its desired point based on equation and here
+we need not maintain the trained data and we can throw it because new data always goes according to equation ex: linear regression ... etc
+
+
+
+
+
