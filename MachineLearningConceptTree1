@@ -46,4 +46,27 @@ Step 10: Deployment: Finally we deploy the model for all the customers.
 
 
 
+                // **************         Tensors         ****************
+
+Tensor = structured collection of numbers arranged along one or more axes.
+
+* Tensor = a way to store numbers in multiple dimensions.
+* It is an extension of scalars, vectors, and matrices.
+
+Type      Dimension   Example
+Scalar    0D          5
+Vector    1D          [1, 2, 3]
+Matrix    2D          [[1,2], [3,4]]
+Tensor    3D+         Multiple matrices stacked together
+
+Important terms:
+* Dimension / Rank → Number of axes in a tensor = Jitna D utna rank or dimension.
+* Shape → Size along each axis = set of records in each dimension.
+  Example: (2, 3, 4) → 1D and (3) is the shape 
+
+
+
+
+
+
 
