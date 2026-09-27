@@ -66,6 +66,41 @@ Important terms:
 
 
 
+                  // **********                Feature Engineering                 ***********
+
+Defination: Feature Engineering is the process of Transforming raw data into useful features That helps a machine learing model learn better, It has 4 steps: 
+
+-> Feature Transformation: Changing the form or scale of existing features to make them more suitable for the ML model, here we perfore things like 
+            -> Missing Value Updation (Imputation)
+            -> Handling Categorical Values using mechanisims like One-Hot-Codint ...etc
+            -> Outliers Detection and Handling Them
+            -> Feature Scaling 
+
+-> Feature Construction: Creating new features from existing features to give the ML model more useful information.
+
+-> Feature Selection: Choosing the most useful features from the available features and removing irrelevant or unnecessary ones.
+
+-> Feature Extraction: Creating new, useful features from raw or complex data while reducing unnecessary information.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
