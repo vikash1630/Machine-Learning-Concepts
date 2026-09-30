@@ -109,6 +109,12 @@ scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)   # learns mean/std from train only
 X_test_scaled = scaler.transform(X_test)         # reuses train's mean/std
 
+*** IMP *** =>  code ki Baat: 
+                    => fit = LEARN
+                    => transform = USE
+                    => fit_transfor = Learn and use // means you can perform individual , but we learn and use the data which is called train_data which is rought 80% of whole data
+                                      and remaining data we only use therefore transform to check if its following our model
+
 
 
 
