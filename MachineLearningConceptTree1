@@ -87,7 +87,9 @@ Defination: Feature Engineering is the process of Transforming raw data into use
 
                 // **********            Feature Scaling : Standardization - 02           ***********
 
-Definition: Standardization (Z-score scaling) is a Feature Scaling technique which puts every column on the same scale by making its mean = 0 and std = 1.
+Feature Scaling contains 2 types , they are standardization, Normalization
+// Standardization
+Definition: Standardization (Z-score scaling) is a Feature Scaling technique which puts every column on the same scale by making its mean = 0 and std = 1. 
 
 Why: Columns like age (18-60) and salary (20,000-2,000,000) have very different ranges, so models see the bigger numbers as more important. Standardization gives every column equal footing.
 
