@@ -85,6 +85,27 @@ Defination: Feature Engineering is the process of Transforming raw data into use
 
 
 
+                // **********            Feature Scaling : Standardization - 02           ***********
+
+Definition: Standardization (Z-score scaling) is a Feature Scaling technique which puts every column on the same scale by making its mean = 0 and std = 1.
+
+Why: Columns like age (18-60) and salary (20,000-2,000,000) have very different ranges, so models see the bigger numbers as more important. Standardization gives every column equal footing.
+
+Formula:  z = (x - mean) / std
+
+-> z = 1.5 means the value is 1.5 standard deviations above the mean, no matter what the original units were.
+
+Important points:
+-> It does NOT change the shape of the distribution, skewed data stays skewed (only shifts and rescales). To make data normal, use log / power transforms.
+-> Outliers still affect it, because mean and std are sensitive to outliers.
+-> fit only on train data, transform on both train and test, otherwise it is DATA LEAKAGE.
+
+Code: 
+from sklearn.preprocessing import StandardScaler
+
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)   # learns mean/std from train only
+X_test_scaled = scaler.transform(X_test)         # reuses train's mean/std
 
 
 
