@@ -85,7 +85,7 @@ Defination: Feature Engineering is the process of Transforming raw data into use
 
 
 
-                // **********            Feature Scaling : Standardization - 02           ***********
+                // **********            Feature Scaling          ***********
 
 Feature Scaling contains 2 types , they are standardization, Normalization
 // Standardization
@@ -117,7 +117,39 @@ X_test_scaled = scaler.transform(X_test)         # reuses train's mean/std
                     => perform this only once, if using twice or multiple times then it will distract its mean and standard deviation
 
 
+// Normalization
+Definition: Normalization (Min-Max scaling) is a Feature Scaling technique which squeezes every column into a fixed range, usually 0 to 1.
 
+Formula:  x_scaled = (x - min) / (max - min)
+
+-> min value becomes 0, max value becomes 1, 0.5 means halfway between min and max of that column.
+
+Important points:
+-> Outliers affect it even more than standardization, one extreme max/min squashes all other values together (ex: one salary of 10 crore pushes every other value near 0).
+-> Output range is fixed (0 to 1), where standardization is not bounded.
+-> Same rule: fit only on train data, transform on both train and test, otherwise it is DATA LEAKAGE.
+
+Variants:
+-> MinMaxScaler : the standard one above
+-> MaxAbsScaler : divides by max absolute value, good for sparse data
+-> RobustScaler : uses median and IQR, so it handles outliers well
+-> Mean Normalization : rarely used
+
+Standardization vs Normalization:
+-> Standardization uses mean and std, output not bounded (about -3 to 3), use when data is roughly bell shaped, or for PCA, linear models
+-> Normalization uses min and max, output fixed 0 to 1, use when bounded range needed ex: image pixels (0-255 -> 0-1), neural networks
+-> Not sure? start with standardization. Outliers a problem? use RobustScaler.
+
+Code:
+from sklearn.preprocessing import MinMaxScaler
+
+scaler = MinMaxScaler()
+X_train_scaled = scaler.fit_transform(X_train)   # learns min/max from train only
+X_test_scaled = scaler.transform(X_test)         # reuses train's min/max
+
+Note: In this video "normalization" means Min-Max, do not mix with Normalizer (scales each ROW to unit length).
+
+Practice: Take a dataset with an outlier in one column, apply both MinMaxScaler and StandardScaler and plot histograms before and after to see the squashing effect.
 
 
 
