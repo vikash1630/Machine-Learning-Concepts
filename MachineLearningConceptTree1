@@ -153,7 +153,72 @@ Practice: Take a dataset with an outlier in one column, apply both MinMaxScaler 
 
 
 
+// **********            Categorical Encoding          ***********
 
+Definition: Encoding converts categorical (text) columns into numbers, because ML models need numerical data.
+
+Flow: Text/Categories -> Encoding -> Numbers -> ML Model
+
+// Ordinal Encoding
+-> Used when categories have a meaningful ORDER (Poor -> 0, Average -> 1, Good -> 2).
+-> Numbers represent the ORDER.
+-> When order matters, pass the order explicitly instead of relying on the auto learned order.
+-> Used on input features (X).
+
+Code:
+from sklearn.preprocessing import OrdinalEncoder
+
+encoder = OrdinalEncoder(categories=[["Poor", "Average", "Good"]])
+X_train_enc = encoder.fit_transform(X_train)   # learns categories from train only
+X_test_enc = encoder.transform(X_test)         # reuses train's categories
+
+// Label Encoding
+-> Converts categories into numbers, but numbers are just LABELS (Red -> 0, Blue -> 1, Green -> 2).
+-> Does NOT represent any order.
+-> Commonly used on the target column (y).
+
+Code:
+from sklearn.preprocessing import LabelEncoder
+
+encoder = LabelEncoder()
+y_enc = encoder.fit_transform(y)
+
+
+         **************      One-Hot Encoding         **************
+
+-> Used when categories have NO order (Red, Blue, Green).
+-> Creates one separate 0/1 column for each category.
+
+        Red  Blue  Green
+Red      1    0     0
+Blue     0    1     0
+Green    0    0     1
+
+Code:
+from sklearn.preprocessing import OneHotEncoder
+          
+encoder = OneHotEncoder(sparse_output=False)
+X_train_enc = encoder.fit_transform(X_train)
+X_test_enc = encoder.transform(X_test)
+
+Why One-Hot instead of Label for no-order data:
+-> Label Encoding (Red 0, Blue 1, Green 2) makes the model think 2 > 1 > 0, which is a FAKE order.
+-> One-Hot avoids this.
+
+Ordinal vs Label:
+-> Ordinal = number represents ORDER
+-> Label = number represents CATEGORY
+
+Encoding != Scaling:
+-> Encoding converts categories into numbers (Poor -> 0, Good -> 1)
+-> Scaling changes the range of numbers (100 -> 0.0, 200 -> 1.0)
+
+Rule of thumb:
+-> Ordered categories -> Ordinal Encoding
+-> No order -> One-Hot Encoding
+-> Target / output column -> Label Encoding
+
+Same rule as scaling: fit only on train data, transform on both train and test, otherwise it is DATA LEAKAGE.
 
 
 
