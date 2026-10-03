@@ -221,6 +221,33 @@ Rule of thumb:
 Same rule as scaling: fit only on train data, transform on both train and test, otherwise it is DATA LEAKAGE.
 
 
+// **********            Column Transformer          ***********
+
+Definition: ColumnTransformer lets us apply different steps to different columns in one go.
+
+Why: In real data, some columns are numbers and some are text. Each needs different cleaning. Doing it one by one and joining them back is messy, so we use ColumnTransformer.
+
+Important points:
+-> We give it a list of (name, transformer, columns).
+-> Columns we don't mention are REMOVED by default. Use remainder="passthrough" to keep them.
+-> Output is a NumPy array, so column names are gone. Use get_feature_names_out() to get them back.
+-> Same rule: fit only on train data, transform on both train and test, otherwise it is DATA LEAKAGE.
+
+Code:
+from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import OneHotEncoder
+
+ct = ColumnTransformer(
+    transformers=[
+        ("impute_age", SimpleImputer(), ["age"]),
+        ("encode_city", OneHotEncoder(sparse_output=False), ["city"]),
+    ],
+    remainder="passthrough"
+)
+
+X_train_t = ct.fit_transform(X_train)   # learns from train only
+X_test_t = ct.transform(X_test)         # uses what train learned
 
 
 
