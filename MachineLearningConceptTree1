@@ -251,6 +251,67 @@ X_test_t = ct.transform(X_test)         # uses what train learned
 
 
 
+// **********            ML Pipelines          ***********
+
+Definition: A Pipeline chains multiple steps (preprocessing + model) into one object, so data flows through them in a fixed order.
+
+Why: Doing fit_transform / transform for every step on train and test is messy and easy to get wrong. Pipeline does it all in one go.
+
+
+Pipeline vs ColumnTransformer:
+-> ColumnTransformer = steps run SIDE BY SIDE, different steps for different columns
+-> Pipeline = steps run ONE AFTER ANOTHER, output of one goes into the next
+-> We use both together: ColumnTransformer goes inside the Pipeline
+
+Important points:
+-> Steps run in order, output of one step becomes input of the next.
+-> All steps except the last must be transformers (imputer, scaler, encoder). Last step is usually the model.
+-> fit() = fit_transform on every step, then fit the model (train data only)
+-> predict() = only transform on every step, then predict (test data)
+-> We never call fit_transform or transform ourselves when using a pipeline.
+-> make_pipeline = shortcut, names are given automatically.
+
+Syntax:
+Pipeline(
+  [("name1", step1), 
+  ("name2", step2), 
+  ("model", model)]
+)
+// shortcout
+make_pipeline(step1, step2, model) => here names are need not to be given
+
+Code:
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.linear_model import LogisticRegression
+
+num_pipe = Pipeline([
+    ("impute", SimpleImputer(strategy="mean")),
+    ("scale", StandardScaler()),
+])
+
+cat_pipe = Pipeline([
+    ("impute", SimpleImputer(strategy="most_frequent")),
+    ("encode", OneHotEncoder(handle_unknown="ignore")),
+])
+
+ct = ColumnTransformer(
+    [
+        ("num", num_pipe, ["Age", "Fare"]),
+        ("cat", cat_pipe, ["Sex", "Embarked"]),
+    ],
+    remainder="passthrough"
+)
+
+final = Pipeline([
+    ("preprocess", ct),
+    ("model", LogisticRegression()),
+])
+
+final.fit(X_train, y_train)          # learns from train only
+final.score(X_test, y_test)          # uses what train learned
 
 
 
