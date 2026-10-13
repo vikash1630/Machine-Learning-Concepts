@@ -1,1 +1,66 @@
 
+// **********            FunctionTransformer            ************
+
+Definition:
+FunctionTransformer is a Feature Transformation technique used to apply a mathematical function to existing features.
+
+Why:
+Sometimes data contains highly skewed values. We transform these values to make their distribution more suitable for ML models.
+
+Common Transformations:
+-> np.log1p(x)  : Log Transformation
+-> np.sqrt(x)   : Square Root Transformation
+-> np.square(x) : Squaring
+-> 1 / x        : Reciprocal (x must not be zero)
+
+Formula:
+-> Log Transformation: x' = log(1 + x)
+
+Important points:
+-> Log transformation is useful for reducing RIGHT SKEWNESS.
+-> It compresses large values more than small values.
+-> It does NOT guarantee better model accuracy.
+-> StandardScaler changes the SCALE, but does NOT remove skewness.
+-> FunctionTransformer changes the SHAPE when the chosen function does so.
+-> Compare results on validation data.
+
+// **********  StandardScaler vs FunctionTransformer  ************
+
+// My Understanding:
+
+// 1. FunctionTransformer
+-> Used when we want to change the distribution of a feature.
+-> Example: Salary contains extremely large values, so we apply
+   log transformation to reduce right skewness.
+-> It can be applied to one or multiple columns.
+
+// 2. StandardScaler
+-> Used to bring numerical features onto a comparable scale.
+-> Example: Age ranges from 18-60, but Salary ranges from
+   20,000-10,00,000.
+-> Scaling can help algorithms like KNN and SVM.
+
+// 3. Can we use both?
+-> YES! We can apply log transformation to Salary first,
+   then StandardScaler to Age and transformed Salary.
+-> This addresses two different problems:
+   FunctionTransformer -> Distribution / shape
+   StandardScaler      -> Scale
+
+// Memory Trick:
+-> Skewness problem = Consider a transformation.
+-> Scale problem = Consider a scaler.
+-> Both problems = We may use both!
+
+// **********            Code            ************
+
+from sklearn.preprocessing import FunctionTransformer
+import numpy as np
+
+transformer = FunctionTransformer(np.log1p)
+
+X_transformed = transformer.fit_transform(X)
+
+
+
+
