@@ -155,3 +155,31 @@ X_train_b = bz.fit_transform(X_train[["Fare"]])
 Remember:
 -> Binning = Values -> Groups
 -> Binarization = Values -> 0 or 1
+
+// **********            Handling Mixed Variables          ***********
+
+Problem: Some columns hold both numbers and text, so the model can't use them as they are. Ex: Titanic Cabin -> A15, B22, C85.
+
+Definition: A mixed variable is a column that contains both numerical and categorical values.
+
+Types:
+-> Type 1: numbers and text in separate rows (a value is either number or text). Ex: 1, 2, A, B, 3
+-> Type 2: text and number in the same value. Ex: Cabin "A15" (letter A + number 15)
+
+Solution: Split the column into two new columns, one numerical and one categorical.
+
+Why:
+-> Each part gets the right treatment (scaling for numerical, encoding for categorical)
+-> Each part may carry useful information (cabin letter = deck, number = position)
+
+Important points:
+-> Split first, then apply normal feature engineering on the new columns.
+-> NaN in the original stays NaN in the new columns.
+-> Some cabins have many values ("C23 C25 C27"), we take only the first.
+
+Code:
+
+df["cabin_letter"] = df["Cabin"].str[0]                             # first letter
+df["cabin_num"] = df["Cabin"].str.extract(r"(\d+)").astype(float)   # the digits
+
+Remember: Mixed variable = split into number part + text part
