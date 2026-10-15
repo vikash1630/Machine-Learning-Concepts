@@ -110,3 +110,48 @@ import matplotlib.pyplot as plt
 stats.probplot(X_train["Fare"], dist="norm", plot=plt)
 
 
+
+// **********            Binning and Binarization          ***********
+
+Problem: Numerical columns have many values, outliers and uneven spread. Often we only care about the range or a yes/no, not the exact value.
+
+// Binning (Discretization)
+Definition: Converts a continuous column into groups (bins). Ex: Age -> Child, Teenager, Adult, Senior.
+
+Why: Simplifies data, captures range patterns, handles outliers (they fall in the first or last bin).
+
+Types (strategy):
+-> Equal Width (uniform): same width for every bin
+-> Equal Frequency (quantile): same number of values in every bin
+-> KMeans: bins from clusters of similar values
+
+Important points:
+-> Fit only on train data, transform on both train and test, otherwise it is DATA LEAKAGE.
+-> Input must be 2D, so use [["Age"]].
+
+Code:
+from sklearn.preprocessing import KBinsDiscretizer
+
+kbin = KBinsDiscretizer(n_bins=5, encode="ordinal", strategy="quantile")
+X_train_t = kbin.fit_transform(X_train[["Age"]])
+X_test_t = kbin.transform(X_test[["Age"]])
+kbin.bin_edges_
+
+-> encode = "ordinal", "onehot", "onehot-dense"
+-> strategy = "uniform", "quantile", "kmeans"
+
+
+// Binarization
+Definition: Converts values into 0 or 1 using a threshold (above threshold = 1, rest = 0). Ex: Age > 18 -> 1.
+
+Why: Creates a yes/no indicator.
+
+Code:
+from sklearn.preprocessing import Binarizer
+
+bz = Binarizer(threshold=10)
+X_train_b = bz.fit_transform(X_train[["Fare"]])
+
+Remember:
+-> Binning = Values -> Groups
+-> Binarization = Values -> 0 or 1
