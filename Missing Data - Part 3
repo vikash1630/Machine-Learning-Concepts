@@ -1,0 +1,44 @@
+
+// **********            Complete Case Analysis (CCA)          ***********
+
+Problem: Real data has missing values (NaN). Most ML models can't train on them, so we must handle them first.
+
+Two options:
+-> Remove the missing data (CCA)
+-> Impute (fill) the missing values
+     -> Univariate: uses only that column (mean, median, mode...)
+     -> Multivariate: uses other columns too (KNN, iterative)
+
+Definition: Complete Case Analysis (list-wise deletion) deletes every row that has a missing value in any column. Only the complete rows stay.
+
+When to use:
+-> Data is Missing Completely At Random (no pattern, not related to other columns)
+-> Missing part is small, less than 5% of the data
+
+Advantages:
+-> Simple and fast
+-> Doesn't change the distribution of the remaining data (if missing is random)
+
+Disadvantages:
+-> We lose data, too many rows gone means too much information lost
+-> Biased result if data is not missing at random
+-> Can't handle missing values in new data in production
+
+How to check it is safe:
+-> Find % of missing in each column
+-> Delete the rows, then compare the distribution before and after. If similar, CCA is safe.
+
+Code:
+df.isnull().mean() * 100                                          # % missing per column
+
+cols = [var for var in df.columns if 0 < df[var].isnull().mean() < 0.05]
+new_df = df[cols].dropna()                                        # the CCA step
+
+df["Age"].plot.density()                                          # before
+new_df["Age"].plot.density()                                      # after
+
+df["city"].value_counts(normalize=True)                           # categorical: compare proportions
+new_df["city"].value_counts(normalize=True)
+
+Remember: CCA = dropna(), the checks decide if it is safe
+
