@@ -4,6 +4,10 @@
 Definition:
 FunctionTransformer is a Feature Transformation technique used to apply a mathematical function to existing features.
 
+******** IMPORTANT : Function Transformer or any transformer are used to make the coloumn such that its distribution is like bell shaped (normal form) because
+                     our machine learning models perform well on bell shaped distribution , where as standardization helps to bring the data on a scale such that
+                     it is easy to develop equal footing with corresponding columns so only one coloumn doesnt dominate rigorously
+***********
 Why:
 Sometimes data contains highly skewed values. We transform these values to make their distribution more suitable for ML models.
 
