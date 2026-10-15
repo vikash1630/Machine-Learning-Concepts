@@ -183,3 +183,36 @@ df["cabin_letter"] = df["Cabin"].str[0]                             # first lett
 df["cabin_num"] = df["Cabin"].str.extract(r"(\d+)").astype(float)   # the digits
 
 Remember: Mixed variable = split into number part + text part
+
+
+// **********            Handling Date and Time Variables          ***********
+
+Problem: Date and time columns (2023-05-14, 10:30 AM) are stored as text, so the model can't use them. A full date is also too specific, the useful information is hidden inside it.
+
+Definition: Convert the column to datetime type and extract useful parts (year, month, day, hour...) as new columns.
+
+Why:
+-> Parts carry patterns (December sales are higher, weekends differ from weekdays)
+-> Models can't learn from a raw date string
+
+What we extract:
+-> Date parts: year, month, day, day of week, quarter
+-> Names: month name, day name
+-> Flag: is weekend (1/0)
+-> Time parts: hour, minute, second
+-> Time elapsed: gap between a date and today
+
+Important points:
+-> Always convert to datetime first, extraction works only after that.
+-> Time elapsed is useful for age, tenure, days since last purchase.
+
+Code:
+df["date"] = pd.to_datetime(df["date"])
+
+df["year"] = df["date"].dt.year                      # same way: month, day, quarter, hour, minute
+df["day_name"] = df["date"].dt.day_name()            # same way: month_name()
+df["is_weekend"] = np.where(df["day_name"].isin(["Saturday", "Sunday"]), 1, 0)
+
+df["days_passed"] = (datetime.datetime.today() - df["date"]).dt.days
+
+Remember: convert to datetime first, then use .dt for everything
