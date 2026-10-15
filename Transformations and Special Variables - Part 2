@@ -66,5 +66,47 @@ transformer = FunctionTransformer(np.log1p)
 X_transformed = transformer.fit_transform(X)
 
 
+// **********            Power Transformer          ***********
+
+Definition: Power Transformer (Box-Cox and Yeo-Johnson) automatically finds the best power (λ) to make a skewed column look more like a normal distribution.
+
+Why: In Function Transformer we guess the function by trial and error. Power Transformer learns the best λ from the data for us.
+
+Formula (Box-Cox):  y = (x^λ - 1) / λ,   when λ = 0 then y = log(x)
+
+-> λ = 1 no change, 0.5 square root, 0 log, -1 reciprocal, 2 square. So earlier functions are special cases of this.
+-> Best λ = the one that makes data most bell-shaped (found from the data).
+
+Box-Cox vs Yeo-Johnson:
+-> Box-Cox: only x > 0
+-> Yeo-Johnson: any x (positive, zero, negative), safer choice
+-> Not sure? use Yeo-Johnson.
+
+Yeo-Johnson formula (4 cases):
+-> x >= 0, λ != 0 :  ((x + 1)^λ - 1) / λ
+-> x >= 0, λ = 0  :  log(x + 1)
+-> x < 0,  λ != 2 :  -((-x + 1)^(2 - λ) - 1) / (2 - λ)
+-> x < 0,  λ = 2  :  -log(-x + 1)
+-> Positive side = Box-Cox on (x + 1), negative side = mirrored version.
+
+Important points:
+-> It learns λ from data, so fit only on train data, transform on both train and test, otherwise it is DATA LEAKAGE.
+-> By default sklearn also standardizes the output (mean 0, std 1).
+-> Check before and after with histogram or QQ plot.
+-> Not needed for tree models.
+
+Code:
+from sklearn.preprocessing import PowerTransformer
+
+pt = PowerTransformer(method="yeo-johnson")   # or "box-cox"
+X_train_t = pt.fit_transform(X_train)         # learns λ from train only
+X_test_t = pt.transform(X_test)               # reuses train's λ
+
+pt.lambdas_                                   # λ of each column
+
+# QQ plot check
+import scipy.stats as stats
+import matplotlib.pyplot as plt
+stats.probplot(X_train["Fare"], dist="norm", plot=plt)
 
 
