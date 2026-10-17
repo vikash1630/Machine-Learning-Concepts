@@ -165,3 +165,55 @@ X_test_t = imp.transform(X_test[["Age"]])
 Remember:
 -> Random imputation = keeps the shape of the data
 -> Missing indicator = keeps the "was missing" information
+
+
+// **********            KNN Imputer (Multivariate Imputation)          ***********
+
+Problem: Mean, median and mode fill a column using only its own values. But a missing value (like Age) may depend on other columns (Fare, Class). Univariate methods ignore that.
+
+Definition: Multivariate imputation fills a missing value using the other columns too. KNN Imputer fills it with the average of the same feature from the k nearest rows in the training data.
+
+How it works:
+-> Take a row with a missing value
+-> Find the k nearest rows using the other columns (distance)
+-> Fill with the average of those neighbours' values
+Ex: Row D (Fare 11, Pclass 3, Age NaN) is closest to A (Age 22) and B (Age 24), so Age = 23
+
+Distance: nan-Euclidean distance, normal Euclidean distance using only the columns that are not missing in both rows.
+
+Parameters:
+-> n_neighbors: number of neighbours k (default 5)
+-> weights: "uniform" (plain average) or "distance" (closer neighbours count more)
+
+Advantages: more accurate than mean/median, because it uses other columns.
+
+Disadvantages:
+-> Slow on big data (distance for every row)
+-> Training data must be kept, even in production
+-> Sensitive to outliers and column scales
+
+Important points:
+-> Scale the data first (fit scaler on train only), otherwise big-range columns dominate the distance.
+-> Fit only on train data, transform on both train and test, otherwise it is DATA LEAKAGE.
+-> Works on numbers only, encode text columns first.
+-> Output is a NumPy array, put the column names back with a DataFrame.
+-> Only the columns you pass are used, choose columns related to the missing column.
+
+Code:
+from sklearn.impute import KNNImputer
+
+scaler = StandardScaler()
+X_train_s = scaler.fit_transform(X_train)
+X_test_s = scaler.transform(X_test)
+
+knn = KNNImputer(n_neighbors=3, weights="distance")
+X_train_i = knn.fit_transform(X_train_s)
+X_test_i = knn.transform(X_test_s)
+
+X_train_final = pd.DataFrame(scaler.inverse_transform(X_train_i), columns=X_train.columns)   # back to original scale
+
+# specific columns only
+cols = ["Age", "Fare", "Pclass"]
+X_train_t = knn.fit_transform(X_train[cols])
+
+Remember: KNN Imputer = fill with the average of the nearest rows
