@@ -42,3 +42,41 @@ new_df["city"].value_counts(normalize=True)
 
 Remember: CCA = dropna(), the checks decide if it is safe
 
+
+// **********            Handling Missing Numerical Data (Simple Imputer)          ***********
+
+Problem: Deleting rows (CCA) loses data or causes bias when too much is missing or it is not missing at random. So we fill the missing values instead.
+
+Definition: Univariate imputation fills the missing values of a column using only that column's own data.
+
+3 Techniques:
+-> Mean / Median: fill with mean (normal data) or median (skewed data or outliers)
+     Use when: missing completely at random and less than 5% missing
+-> Arbitrary Value: fill with a fixed value like 0, -1, 999 that stands out from real data
+     Use when: not missing at random, the model can learn "this value means missing"
+-> End of Distribution: fill with a value at the far end of the data
+     Normal data: mean + 3 * std
+     Skewed data: Q3 + 1.5 * IQR
+     Use when: not missing at random (same as arbitrary, but value is picked automatically)
+
+Important points:
+-> Mean/median changes the shape and variance (values pile up at the mean/median) and reduces correlation with other columns.
+-> All three learn a value from data, so fit only on train data, transform on both train and test, otherwise it is DATA LEAKAGE.
+-> SimpleImputer handles mean, median and constant. End of distribution is done by hand.
+
+Code:
+from sklearn.impute import SimpleImputer
+
+imp = SimpleImputer(strategy="median")                       # "mean" or "median"
+X_train_t = imp.fit_transform(X_train[["Age"]])
+X_test_t = imp.transform(X_test[["Age"]])
+
+imp = SimpleImputer(strategy="constant", fill_value=-1)      # arbitrary value
+
+extreme = X_train["Age"].mean() + 3 * X_train["Age"].std()   # end of distribution
+X_train["Age_end"] = X_train["Age"].fillna(extreme)
+X_test["Age_end"] = X_test["Age"].fillna(extreme)
+
+Remember:
+-> Missing at random and small = mean or median
+-> Missing has a meaning = arbitrary value or end of distribution
