@@ -1,1 +1,113 @@
+// **********            What are Outliers          ***********
 
+Problem: Some values in a column are extremely far from the rest (a salary of 10 crore among normal salaries, an age of 200). They pull the model in the wrong direction and give bad results.
+
+Definition: Outliers are data points that differ significantly from the other observations in a dataset.
+Ex: ages 22, 25, 28, 30, 200 -> 200 is the outlier
+
+Why they appear:
+-> Data entry or measurement mistakes
+-> Genuinely rare values (a real billionaire in a salary column)
+
+Which models are affected:
+-> Affected (learn weights): linear regression, logistic regression, AdaBoost, deep learning
+-> Not affected much: decision tree, random forest, gradient boosting
+
+Where to check: EDA step, using histogram, box plot, density plot.
+
+3 ways to detect:
+-> Z-score method: normally distributed data
+-> IQR method: skewed data
+-> Percentile method: any distribution
+
+4 ways to treat:
+-> Trimming: remove the outlier rows
+-> Capping (winsorization): replace outliers with a limit value, rows stay
+-> Treat as missing values: set to NaN and impute
+-> Discretization: put them in the last bin
+
+Important points:
+-> First check if the outlier is a mistake or a real value, real values may carry important information.
+-> Trimming loses data, capping keeps all rows.
+-> Limits are learned from train data only.
+
+Remember: Outlier = extreme value, detect with Z-score / IQR / percentile, treat with trimming / capping
+
+// **********            Outliers: Z-score Method          ***********
+
+Problem: We need a clear rule to find outliers in a normally distributed column.
+
+Definition: Z-score method measures how many standard deviations a value is from the mean. Too far = outlier.
+
+Formula: z = (x - mean) / std
+
+Rule: z > 3 or z < -3 is an outlier
+-> Upper limit = mean + 3 * std
+-> Lower limit = mean - 3 * std
+
+Treatment:
+-> Trimming: remove outlier rows
+-> Capping: replace outliers with the limit values
+
+Important points:
+-> Use only on roughly normal data. For skewed data use IQR.
+-> Mean and std are themselves affected by outliers.
+-> Learn limits from train data only.
+
+Code:
+upper = X_train["Age"].mean() + 3 * X_train["Age"].std()
+lower = X_train["Age"].mean() - 3 * X_train["Age"].std()
+trimmed = X_train[(X_train["Age"] < upper) & (X_train["Age"] > lower)]    # trimming
+X_train["Age"] = X_train["Age"].clip(lower, upper)                        # capping
+
+
+
+// **********            Outliers: IQR Method          ***********
+
+Problem: Z-score fails on skewed data because mean and std get dragged by the tail.
+
+Definition: IQR method finds outliers using the middle 50% of data, so it works on skewed data.
+
+Formula: IQR = Q3 - Q1 (Q1 = 25th percentile, Q3 = 75th percentile)
+
+Rule:
+-> Upper limit = Q3 + 1.5 * IQR
+-> Lower limit = Q1 - 1.5 * IQR
+-> Outside the limits = outlier (these are the whiskers of a box plot)
+
+Important points:
+-> Use on skewed data.
+-> Trimming and capping work the same as Z-score.
+-> Learn limits from train data only.
+
+Code:
+q1 = X_train["Fare"].quantile(0.25)
+q3 = X_train["Fare"].quantile(0.75)
+iqr = q3 - q1
+upper = q3 + 1.5 * iqr
+lower = q1 - 1.5 * iqr
+
+
+
+// **********            Outliers: Percentile Method and Winsorization          ***********
+
+Problem: Z-score needs normal data and IQR is for skewed data. We want a method that works on any distribution.
+
+Definition: Percentile method treats values below a lower percentile and above an upper percentile as outliers (ex: 1st and 99th).
+
+Winsorization: capping at percentile limits (values below the lower percentile become the lower value, values above the upper percentile become the upper value).
+
+Important points:
+-> Works on any distribution.
+-> It always flags that percentage of data (2% for 1st/99th), even if no real outliers exist.
+-> We choose the percentile cut-off ourselves.
+-> Learn limits from train data only.
+
+Code:
+lower = X_train["Fare"].quantile(0.01)
+upper = X_train["Fare"].quantile(0.99)
+X_train["Fare"] = X_train["Fare"].clip(lower, upper)       # winsorization
+
+Remember:
+-> Normal data = Z-score, skewed data = IQR, any data = Percentile
+-> Trimming = remove rows, Capping = replace with limit
