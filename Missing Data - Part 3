@@ -80,3 +80,38 @@ X_test["Age_end"] = X_test["Age"].fillna(extreme)
 Remember:
 -> Missing at random and small = mean or median
 -> Missing has a meaning = arbitrary value or end of distribution
+
+// **********            Handling Missing Categorical Data          ***********
+
+Problem: Mean and median only work on numbers. A text column (City, Embarked) needs a different way to fill the missing values.
+
+Definition: Categorical imputation fills the missing values of a text column using that column's own data.
+
+2 Methods:
+-> Most Frequent (Mode): fill with the category that appears most often
+     Ex: S, S, C, NaN, S -> NaN becomes S
+     Use when: missing at random and less than 5% missing
+-> Missing Category: fill with a new category called "Missing"
+     Ex: S, S, C, NaN, S -> NaN becomes Missing
+     Use when: a lot is missing, or missing values may carry meaning
+
+Advantages and Disadvantages:
+-> Mode: simple and fast, but if many values are missing the most frequent category becomes too big (distorts data, adds bias)
+-> Missing Category: no assumption and the model can learn "missing" as a pattern, but if very few values are missing it creates a tiny useless category
+
+Important points:
+-> Mode learns a value from data, so fit only on train data, transform on both train and test, otherwise it is DATA LEAKAGE.
+-> After imputing, the column is still text, so encode it next.
+
+Code:
+from sklearn.impute import SimpleImputer
+
+imp = SimpleImputer(strategy="most_frequent")                         # mode
+X_train_t = imp.fit_transform(X_train[["Embarked"]])
+X_test_t = imp.transform(X_test[["Embarked"]])
+
+imp = SimpleImputer(strategy="constant", fill_value="Missing")        # missing category
+
+Remember:
+-> Small and random = mode
+-> Many missing or has meaning = Missing category
