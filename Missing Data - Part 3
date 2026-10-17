@@ -217,3 +217,44 @@ cols = ["Age", "Fare", "Pclass"]
 X_train_t = knn.fit_transform(X_train[cols])
 
 Remember: KNN Imputer = fill with the average of the nearest rows
+
+// **********            MICE (Iterative Imputer)          ***********
+
+Problem: KNN Imputer needs distance calculation, which is slow. We want a method that learns the relationship between columns and uses it to fill missing values.
+
+Definition: MICE (Multivariate Imputation by Chained Equations) / Iterative Imputer predicts each column that has missing values from the other columns using a regression model, again and again, until the filled values stop changing.
+
+Steps:
+-> Initial fill: fill all missing values with the column mean
+-> Pick one column: put its missing values back to NaN
+-> Train a regression model on rows where that column is known (target = this column, inputs = other columns), predict the NaN values
+-> Repeat for every column with missing values (one iteration done)
+-> Subtract previous iteration's values from the new ones
+-> Repeat until the difference is close to 0 or max_iter is reached
+
+Advantages:
+-> Usually more accurate than mean, median or KNN
+-> Keeps the relationships between columns
+
+Disadvantages:
+-> Slower and more complex (trains many models)
+-> Heavy on big data
+
+Important points:
+-> Works best when the columns are related to each other.
+-> Fit only on train data, transform on both train and test, otherwise it is DATA LEAKAGE.
+-> Works on numbers only, encode text columns first.
+-> Output is a NumPy array, put the column names back with a DataFrame.
+
+Code:
+from sklearn.experimental import enable_iterative_imputer      # must come first
+from sklearn.impute import IterativeImputer
+
+imp = IterativeImputer(max_iter=10, random_state=0)
+X_train_t = imp.fit_transform(X_train)
+X_test_t = imp.transform(X_test)
+
+-> max_iter = maximum rounds (stops earlier if values settle)
+-> estimator = regression model used for each column (default BayesianRidge)
+
+Remember: MICE = predict each column from the others, repeat until the values settle
