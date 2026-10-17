@@ -115,3 +115,53 @@ imp = SimpleImputer(strategy="constant", fill_value="Missing")        # missing 
 Remember:
 -> Small and random = mode
 -> Many missing or has meaning = Missing category
+
+// **********            Random Sample Imputation and Missing Indicator          ***********
+
+Problem: Mean/median imputation squeezes many values to one point, so the shape and variance of the column change. Also, once a value is filled, the model no longer knows it was missing.
+
+// Random Sample Imputation
+Definition: Fill each missing value with a randomly picked value from the column's own observed (non-missing) values. Works for numerical and categorical columns.
+Ex: Age 22, 25, 28, NaN, 30 -> NaN becomes a random pick from 22, 25, 28, 30.
+
+Why: Keeps the distribution (mean, variance) close to the original.
+
+Use when: missing completely at random.
+
+Disadvantages:
+-> Randomness, result changes each run unless random_state is fixed
+-> Training data must stay available to pick values from, even in production
+-> Doesn't keep the relationship with other columns
+
+Code:
+observed = X_train["Age"].dropna()                         # observed values, train only
+n_train = X_train["Age"].isnull().sum()
+
+X_train["Age_imputed"] = X_train["Age"]                    # copy, fill only the copy
+X_train.loc[X_train["Age"].isnull(), "Age_imputed"] = observed.sample(n_train, random_state=0).values
+
+-> Same for test, but pick from train's observed values (no leakage).
+-> .values places the picked values by position, not by index.
+
+
+// Missing Indicator
+Definition: Adds a new 1/0 column showing whether the value was missing (1) or not (0), next to the imputed column.
+
+Why: Keeps the information "this was missing", which the model can learn from when missing values carry meaning.
+
+Important points:
+-> Used together with an imputation (mean, median, mode or random), not alone.
+-> Adds extra columns.
+-> Fit only on train data, transform on both train and test, otherwise it is DATA LEAKAGE.
+
+Code:
+X_train["Age_missing"] = X_train["Age"].isnull().astype(int)     # by hand
+
+from sklearn.impute import SimpleImputer
+imp = SimpleImputer(strategy="median", add_indicator=True)       # imputed column + indicator column
+X_train_t = imp.fit_transform(X_train[["Age"]])
+X_test_t = imp.transform(X_test[["Age"]])
+
+Remember:
+-> Random imputation = keeps the shape of the data
+-> Missing indicator = keeps the "was missing" information
