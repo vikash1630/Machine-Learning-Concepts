@@ -1,0 +1,14 @@
+        **********   Why test and train and split all at once ************
+
+# ❌ Mistake: Splitting X and Y independently
+X_train, X_test = train_test_split(X, test_size=0.2, random_state=42)
+Y_train, Y_test = train_test_split(Y, test_size=0.2, random_state=42)
+
+# ✅ Correct: Split X and Y together
+X_train, X_test, Y_train, Y_test = train_test_split(
+    X, Y, test_size=0.2, random_state=42
+)
+
+# ⭐ Noteworthy:
+# Independent splits can mismatch feature rows with target values.
+# Splitting together preserves X-Y row alignment.
