@@ -1,0 +1,116 @@
+// **********            Simple Linear Regression          ***********
+
+Definition: Simple Linear Regression predicts a number (output) from ONE input column by fitting the best straight line through the data.
+
+Formula:  y = m·x + b
+-> m = slope = how much y changes when x increases by 1
+-> b = intercept = value of y when x = 0
+
+Example: salary = m × (years of experience) + b
+
+How it finds the best line:
+-> It tries many lines and picks the one with the smallest total squared error (actual - predicted)². This is called Least Squares.
+-> m = Σ(x - x̄)(y - ȳ) / Σ(x - x̄)²
+-> b = ȳ - m·x̄       (x̄ = mean of x, ȳ = mean of y)
+
+Important points:
+-> Only ONE input column. More than one input = Multiple Linear Regression (next topic).
+-> Output must be a continuous number (price, bill, salary), not a category.
+-> Input X must be 2D (df[["tenure"]]), output y is 1D (df["TotalCharges"]).
+-> Positive slope = y increases with x, negative slope = y decreases with x.
+-> Outliers pull the line towards them, so check for outliers first.
+-> Same rule: fit only on train data, predict on test, otherwise it is DATA LEAKAGE.
+
+Code:
+from sklearn.linear_model import LinearRegression
+
+model = LinearRegression()
+model.fit(X_train, y_train)          # learns m and b from train only
+
+model.coef_[0]                       # slope (m)
+model.intercept_                     # intercept (b)
+model.predict(X_test)                # uses what train learned
+model.predict([[24]])                # predict for a new value (tenure = 24)
+
+
+
+// **********            Multiple Linear Regression          ***********
+
+Definition: Multiple Linear Regression predicts a number (output) from TWO OR MORE input columns by fitting the best flat plane (hyperplane) through the data.
+
+Formula:  y = b0 + b1·x1 + b2·x2 + ... + bn·xn
+-> b0 = intercept
+-> b1, b2 ... = coefficients, one for each input column
+-> b1 = how much y changes when x1 increases by 1, keeping all other columns FIXED
+
+Example: price = b0 + b1·(area) + b2·(bedrooms) + b3·(location score)
+
+How it finds the best line:
+-> Same as Simple LR: Least Squares (smallest total squared error)
+-> With many columns it solves it using matrices (Normal Equation): B = (XᵀX)⁻¹ Xᵀy
+-> sklearn does this for us, we only call fit()
+
+Important points:
+-> Simple LR = 1 input, Multiple LR = 2 or more inputs, code is almost the same.
+-> Output must still be a continuous number.
+-> Text columns must be encoded first (One-Hot / Ordinal), model only takes numbers.
+-> Coefficients can be compared with each other only if columns are on the same scale, so use Standardization first.
+-> If two input columns are highly correlated (Multicollinearity), the coefficients become unstable and unreliable.
+-> Adding a useless column can still increase R2, so check Adjusted R2.
+-> Same rule: fit only on train data, predict on test, otherwise it is DATA LEAKAGE.
+
+Code:
+from sklearn.linear_model import LinearRegression
+
+X = df[["tenure", "MonthlyCharges"]]      # 2 or more columns
+y = df["TotalCharges"]
+
+model = LinearRegression()
+model.fit(X_train, y_train)               # learns b0, b1, b2 from train only
+
+model.coef_                               # [b1, b2]
+model.intercept_                          # b0
+model.predict(X_test)                     # uses what train learned
+model.predict([[24, 70]])                 # new value (tenure=24, MonthlyCharges=70)
+
+
+
+
+// **********            Regression Metrics          ***********
+
+Definition: Regression metrics are numbers that tell how good the model's predictions are, by comparing actual values (y) with predicted values (ŷ).
+
+Error: eᵢ = yᵢ - ŷᵢ   (actual - predicted),  n = number of predictions
+
+Formulas:
+-> MAE  = (1/n) · Σ |eᵢ|                    (Mean Absolute Error)
+-> MSE  = (1/n) · Σ eᵢ²                     (Mean Squared Error)
+-> RMSE = √MSE                              (Root Mean Squared Error)
+-> R2   = 1 - (SS_res / SS_tot)
+          SS_res = Σ (yᵢ - ŷᵢ)²   (model's error)
+          SS_tot = Σ (yᵢ - ȳ)²    (error if we always predict the mean)
+-> Adjusted R2 = 1 - (1 - R2)(n - 1) / (n - k - 1)      (k = number of input columns)
+
+Important points:
+-> MAE, MSE, RMSE = error, LOWER is better. R2, Adjusted R2 = score, HIGHER is better (max 1).
+-> MAE and RMSE are in the same unit as y (₹, $). MSE is in squared unit, so it is hard to read.
+-> MAE treats all errors equally, RMSE punishes big errors much more (RMSE >= MAE always).
+-> MAE = easy to explain. RMSE = use when big mistakes are costly.
+-> R2 = 1 -> perfect, R2 = 0 -> no better than predicting the mean, R2 < 0 -> worse than the mean.
+-> R2 always goes UP when a column is added, even a useless one. Adjusted R2 goes up only if the column really helps.
+-> Adjusted R2 <= R2 always.
+-> Calculate metrics on TEST data, not train data.
+
+Code:
+import numpy as np
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+
+y_pred = model.predict(X_test)
+
+mae  = mean_absolute_error(y_test, y_pred)
+mse  = mean_squared_error(y_test, y_pred)
+rmse = np.sqrt(mse)
+r2   = r2_score(y_test, y_pred)
+
+n, k = X_test.shape
+adj_r2 = 1 - (1 - r2) * (n - 1) / (n - k - 1)      # sklearn has no built-in for this
