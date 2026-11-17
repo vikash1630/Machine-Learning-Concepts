@@ -1,0 +1,126 @@
+// **********            Ridge Regression          ***********
+
+Definition: Ridge Regression is Linear Regression with one extra rule. Big coefficients (b1, b2 ...) are punished. The model must keep the error small AND keep the coefficients small.
+
+Why: When a model overfits, its coefficients become very big. The model is overreacting to small changes in the data. Ridge keeps the coefficients small, so the model stays calm and does not memorize noise.
+
+Real life (needed to understand):
+-> A teacher says: "Short and simple answers get full marks. Long and complicated answers lose marks."
+-> The student must still answer correctly, but he is pushed to keep the answer simple.
+-> Ridge does the same with the model. It must fit the data, but it is pushed to stay simple.
+
+Formula:
+-> Loss = Σ (y - ŷ)²  +  α · Σ bⱼ²
+-> First part = normal error (same as Linear Regression)
+-> Second part = penalty = sum of squares of all coefficients (b0 intercept is NOT included)
+-> α (alpha) = how strong the punishment is. We choose it.
+-> Normal equation: B = (XᵀX + αI)⁻¹ Xᵀy      (Linear Regression has no αI)
+
+How alpha works:
+-> α = 0       = no punishment, same as Linear Regression
+-> small α     = light punishment, coefficients shrink a little
+-> large α     = strong punishment, coefficients become very small, model becomes too simple (underfitting)
+-> Alpha controls the bias-variance trade-off: bigger alpha = more bias, less variance
+
+Important points:
+-> Ridge is also called L2 regularization (penalty uses squares, power 2).
+-> Ridge makes coefficients small, but NEVER exactly zero. (Lasso can make them exactly zero.)
+-> Always scale the columns first (StandardScaler). The penalty is the same for all coefficients, so if the columns have different scales, the punishment is unfair.
+-> It helps with multicollinearity. αI makes the matrix safe to invert, so the coefficients become stable.
+-> Use it when the model overfits, and you want to keep ALL the columns.
+-> Good for: many related columns, high degree polynomial, many columns but few rows.
+-> Choose alpha using cross-validation (RidgeCV).
+-> Alpha too small = still overfitting. Alpha too big = underfitting. Look for the middle.
+-> Same rule: fit only on train data, otherwise it is DATA LEAKAGE.
+
+Code:
+from sklearn.linear_model import Ridge, RidgeCV
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import make_pipeline
+
+# Ridge with one alpha
+ridge = make_pipeline(StandardScaler(), Ridge(alpha=10))
+ridge.fit(X_train, y_train)                     # learns from train only
+ridge.score(X_test, y_test)                     # R2 on test data
+
+ridge[-1].coef_                                 # coefficients (small, but not zero)
+
+# Let sklearn choose the best alpha using cross-validation
+model = make_pipeline(StandardScaler(), RidgeCV(alphas=[0.001, 0.1, 1, 10, 100, 1000]))
+model.fit(X_train, y_train)
+model[-1].alpha_                                # best alpha found
+
+// **********            Lasso Regression          ***********
+
+Definition: Lasso is like Ridge, but it punishes the absolute values of the coefficients, not the squares. It can push coefficients to exactly ZERO, so it removes useless columns. This is called automatic feature selection.
+
+Why: Ridge makes coefficients small, but keeps all columns. When many columns are useless, we want to remove them. Lasso does this.
+
+Formula:
+-> Loss = Σ (y - ŷ)²  +  α · Σ |bⱼ|
+-> α = how strong the punishment is (same as Ridge)
+
+Important points:
+-> Lasso is also called L1 regularization. (Ridge = L2)
+-> Ridge shrinks coefficients. Lasso shrinks AND removes them.
+-> Coefficient = 0 means that column is removed from the model.
+-> Bigger alpha = more coefficients become zero. Too big = model becomes too simple.
+-> If two columns are very similar, Lasso keeps one and drops the other. Ridge keeps both.
+-> Scale the columns first (StandardScaler).
+-> Choose alpha using cross-validation (LassoCV).
+-> Use it when: many columns, most are useless, or you want to know which columns really matter.
+
+Code:
+from sklearn.linear_model import Lasso, LassoCV
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import make_pipeline
+
+model = make_pipeline(StandardScaler(), Lasso(alpha=10))
+model.fit(X_train, y_train)                     # learns from train only
+model[-1].coef_                                 # zero = column removed
+
+# Let sklearn choose the best alpha
+model = make_pipeline(StandardScaler(), LassoCV(cv=5))
+model.fit(X_train, y_train)
+model[-1].alpha_                                # best alpha found
+
+
+// **********            ElasticNet Regression          ***********
+
+Definition: ElasticNet uses BOTH penalties at the same time: the Ridge penalty (squares) and the Lasso penalty (absolute values).
+
+Why: Lasso removes useless columns, but it can drop one of two similar columns by chance. Ridge keeps all columns, but it never removes any. ElasticNet does both jobs: it removes useless columns and stays stable with related columns.
+
+Formula:
+-> Loss = Σ (y - ŷ)²  +  α · [ r · Σ|bⱼ|  +  (1 - r) · Σ bⱼ² ]
+-> α = how strong the total punishment is
+-> r = l1_ratio = how much Lasso vs Ridge
+
+How l1_ratio works:
+-> l1_ratio = 1    = pure Lasso
+-> l1_ratio = 0    = pure Ridge
+-> l1_ratio = 0.5  = half Lasso, half Ridge
+
+Important points:
+-> Two settings to choose: alpha and l1_ratio.
+-> Can make coefficients exactly zero (like Lasso), because it has the Lasso part.
+-> When two columns are very similar, it keeps both together (like Ridge). Lasso would drop one.
+-> Use it when: many columns, many of them related to each other.
+-> Scale the columns first (StandardScaler).
+-> Choose both settings using cross-validation (ElasticNetCV).
+
+Code:
+from sklearn.linear_model import ElasticNet, ElasticNetCV
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import make_pipeline
+
+model = make_pipeline(StandardScaler(), ElasticNet(alpha=10, l1_ratio=0.5))
+model.fit(X_train, y_train)                     # learns from train only
+model[-1].coef_                                 # some may be exactly zero
+
+# Let sklearn choose alpha and l1_ratio
+model = make_pipeline(StandardScaler(), ElasticNetCV(l1_ratio=[0.1, 0.5, 0.9, 1], cv=5))
+model.fit(X_train, y_train)
+model[-1].alpha_                                # best alpha
+model[-1].l1_ratio_                             # best l1_ratio
+

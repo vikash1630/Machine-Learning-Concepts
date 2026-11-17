@@ -1,0 +1,111 @@
+// **********            Polynomial Regression          ***********
+
+Definition: Polynomial Regression fits a CURVE instead of a straight line. It adds powers of the input as new columns (x², x³ ...) and then fits a normal Linear Regression on them.
+
+Why: Data is often not a straight line (rises then flattens, rises then falls). A straight line underfits it, a curve follows it.
+
+Formula:
+-> Degree 1:  y = b0 + b1·x                       (straight line)
+-> Degree 2:  y = b0 + b1·x + b2·x²               (parabola)
+-> Degree 3:  y = b0 + b1·x + b2·x² + b3·x³       (S-shaped curve)
+-> Degree d:  y = b0 + b1·x + b2·x² + ... + bd·xᵈ
+
+Important points:
+-> It is still "linear" regression, because the model is linear in the coefficients (b0, b1, b2). Only the input columns are changed.
+-> degree = highest power used. It is a hyperparameter, we choose it.
+-> Low degree = underfitting (too simple). Very high degree = overfitting (follows noise, wiggly curve).
+-> Choose degree by checking TEST score (or cross-validation). Train score always keeps going up with degree, so never choose by train score.
+-> Multiple input columns: PolynomialFeatures also creates interaction terms. Ex: degree 2 on (a, b) gives a, b, a², ab, b².
+-> Number of columns grows very fast with degree and with number of input columns, which makes it slow and prone to overfitting.
+-> x, x², x³ are highly correlated with each other (multicollinearity). Standardize the column first to reduce this.
+-> Poor at extrapolation: outside the training range, the curve can shoot up or down wildly. Don't trust predictions outside the data range.
+-> include_bias=False, because LinearRegression already adds the intercept b0.
+-> Same rule: fit only on train data, transform on both train and test, otherwise it is DATA LEAKAGE.
+-> Regularization (Ridge, Lasso, coming in this group) is used with polynomial features to control overfitting.
+
+Code:
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+
+poly = PolynomialFeatures(degree=2, include_bias=False)
+X_train_poly = poly.fit_transform(X_train)      # learns from train only, creates [x, x²]
+X_test_poly = poly.transform(X_test)            # uses what train learned
+
+model = LinearRegression()
+model.fit(X_train_poly, y_train)                # normal linear regression on new columns
+model.score(X_test_poly, y_test)                # R2 on test data
+
+# shortcut using Pipeline
+from sklearn.pipeline import make_pipeline
+pipe = make_pipeline(PolynomialFeatures(degree=2, include_bias=False), LinearRegression())
+pipe.fit(X_train, y_train)
+
+
+// **********            Bias-Variance Trade-off          ***********
+
+Definition: Every model makes mistakes (errors). These mistakes come from 3 things: Bias, Variance and Noise.
+
+-> Bias = the model is too simple. It cannot catch the real pattern in the data. It makes the same kind of mistake again and again.
+-> Variance = the model is too sensitive to the training data. If the training data changes a little, the model changes a lot.
+-> Noise = random error that is already in the data. No model can remove it.
+
+Why: When a model gives bad results, we must know the reason. Is the model too simple (high bias)? Or is it too complex (high variance)? The fix is different for each. So we need this idea.
+
+Real life (needed to understand): 3 students before an exam.
+-> Student A reads only 1 chapter. He fails in practice papers and in the real exam. = High Bias (Underfitting).
+-> Student B learns old papers word by word. He gets 100% in old papers. But in the real exam the questions come in a new way, and he fails. = High Variance (Overfitting).
+-> Student C understands the concepts. He does well in both. = Good Fit.
+
+Formula:
+-> Total Error = Bias² + Variance + Noise
+-> Bias goes DOWN when the model becomes more complex.
+-> Variance goes UP when the model becomes more complex.
+-> This is the trade-off: we cannot make both zero. We need the middle point.
+
+Underfitting vs Overfitting:
+-> Underfitting = High Bias, Low Variance.  Train error HIGH, Test error HIGH.   Example: straight line on curved data.
+-> Overfitting  = Low Bias, High Variance.  Train error VERY LOW, Test error HIGH.   Example: degree 12 curve on small data.
+-> Good Fit     = Low Bias, Low Variance.   Train error LOW, Test error LOW (and close to train).
+
+Important points:
+-> Easy way to find the problem: compare train score and test score.
+      -> Both low = underfitting
+      -> Train high, test much lower = overfitting
+      -> Both high and close to each other = good fit
+-> Big gap between train score and test score = high variance.
+-> Train score alone never tells the truth. A model can have a perfect train score and still be bad.
+-> Always check the score on TEST data (data the model has never seen).
+-> Noise cannot be removed. Even the best model will have some error.
+
+How to fix Underfitting (High Bias): make the model stronger
+-> Add more features
+-> Use a higher degree (Polynomial)
+-> Use a more powerful model
+-> Reduce regularization (Ridge / Lasso, coming next)
+
+How to fix Overfitting (High Variance): make the model simpler, or give it more data
+-> Get more training data
+-> Remove useless features
+-> Use a lower degree
+-> Use regularization (Ridge / Lasso, coming next)
+-> Use cross-validation
+
+Code:
+for degree in [1, 2, 3, 5, 8, 12]:
+    model = make_pipeline(
+        PolynomialFeatures(degree, include_bias=False),
+        StandardScaler(),
+        LinearRegression()
+    )
+    model.fit(X_train, y_train)
+
+    train_r2 = r2_score(y_train, model.predict(X_train))    # score on seen data
+    test_r2  = r2_score(y_test,  model.predict(X_test))     # score on unseen data
+    print(degree, train_r2, test_r2, train_r2 - test_r2)    # last one = gap
+
+# How to read the output:
+# -> Train R2 keeps going up as degree goes up
+# -> Test R2 goes up, then stops, then falls at high degree
+# -> Gap (train - test) grows with degree = variance is growing
+# -> Best degree = where TEST R2 is highest (not train R2)
+
