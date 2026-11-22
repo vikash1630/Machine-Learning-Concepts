@@ -1,0 +1,50 @@
+// **********            Types of Machine Learning          ***********
+
+Definition: Machine Learning types are decided by one question: does the data have the answer column?
+-> Answers are there   = Supervised learning
+-> No answers          = Unsupervised learning
+
+Why: Every ML project starts with this choice. It decides which algorithms we can use and how we check the result.
+
+Supervised Learning:
+-> The data has inputs (X) AND correct answers (y). The model learns from examples that already have answers, then predicts the answer for new data.
+-> Think of a student with a teacher. The teacher gives questions with the answer key. The student practices, then takes the real exam.
+-> Regression     = predicts a NUMBER (house price, salary, total bill).
+-> Classification = predicts a CLASS (spam or not, leave or stay, contract type).
+-> Examples: Linear Regression, Logistic Regression, Naive Bayes, KNN, SVM, Trees.
+
+Unsupervised Learning:
+-> The data has ONLY inputs. There is no answer column. The model finds patterns by itself.
+-> Think of a pile of mixed toys. Nobody tells you the groups. You sort them yourself: cars, dolls, blocks.
+-> Clustering               = puts similar rows into groups (customer groups, K-Means).
+-> Dimensionality reduction = keeps fewer columns, loses little information (PCA).
+-> Association rules        = finds things that go together ("bread and butter").
+-> Anomaly detection        = finds rows that look strange (fraud, machine faults).
+
+Two more types:
+-> Semi-supervised = a few rows have answers, most do not. Labeling is costly, so the few answers help with the many. Example: 100 labeled photos and 100,000 unlabeled photos.
+-> Reinforcement   = the model tries things and gets rewards or penalties, like training a dog with treats. Examples: game programs, robots learning to walk.
+
+Real life (needed to understand): A phone company has customers with monthly calls and data used.
+-> Supervised: we also know who bought the premium plan. Train a model to predict who will buy premium next.
+-> Unsupervised: no answer column. Ask the model for natural groups. It may find heavy users and light users. The business decides what to do with each group.
+
+Important points:
+-> Only difference when training: supervised uses fit(X, y). Unsupervised uses fit(X).
+-> Unsupervised groups have no names. WE give them meaning. The group numbers (0, 1) are only names and can swap between runs.
+-> Gradient Descent is NOT a type of learning. It is a method to find the best weights.
+-> Where we saw them: Groups 1 to 13 are supervised. Group 14 (Clustering) is unsupervised. PCA is also unsupervised.
+
+Industry standard:
+-> Most business ML is supervised (clear predictions: will leave, will pay, price). The costly part is getting good labels.
+-> Unsupervised is used to explore data, make customer segments, find odd rows (fraud), and cut columns with PCA before a supervised model.
+-> They are often combined: cluster first, then use the cluster number as a new column in a supervised model.
+-> Checking quality is different. Supervised has clear scores on test data (accuracy, F1, RMSE). Unsupervised has no single right answer, so teams use silhouette score and the question "do these groups make business sense?"
+-> Big language models first learn from huge unlabeled data (self-supervised learning), then are fine-tuned with labeled data.
+-> If labels are wrong or biased, a supervised model learns the same mistakes. Always check labels.
+-> Start simple. Build a supervised baseline when you have labels. Use unsupervised when you have no labels, or when you want to understand the data.
+
+One line to remember:
+-> Supervised = learn from examples with answers. Unsupervised = find patterns with no answers.
+
+Practice: Take any small table you know. Decide: does it have an answer column? If yes, say if the answer is a number or a class (regression or classification). If no, say what groups you would look for (clustering).
