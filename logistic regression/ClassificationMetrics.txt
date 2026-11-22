@@ -1,0 +1,203 @@
+// **********            Accuracy and Confusion Matrix          ***********
+
+Definition: Accuracy tells how many answers were right out of all answers. The Confusion Matrix is a small table that shows what the model said and what really happened. It shows WHICH kind of mistakes the model makes.
+
+Why: Accuracy alone can lie when one class is much bigger than the other. The confusion matrix looks inside the answers.
+
+Real life (needed to understand): Spam filter. The "Positive" class = Spam.
+-> 1000 emails. Only 50 are spam. 950 are real mails.
+-> A lazy filter says "not spam" for every mail. It is right for 950 mails. Accuracy = 95%.
+-> But it caught ZERO spam. It is useless, even if accuracy looks great.
+
+Confusion Matrix (Spam filter):
+-> TP (True Positive)  = model said "spam", and it was really spam.        Good catch.
+-> TN (True Negative)  = model said "not spam", and it was really not spam. Good.
+-> FP (False Positive) = model said "spam", but it was a real mail.        Real mail lost in the spam folder.
+-> FN (False Negative) = model said "not spam", but it was spam.           Spam reached the inbox.
+
+Table:
+                     Model said: Spam    Model said: Not spam
+Really Spam              TP                  FN
+Really Not Spam          FP                  TN
+
+How to read the names:
+-> Second word (Positive / Negative) = what the MODEL said.
+-> First word (True / False) = was the model right or wrong.
+
+Formula:
+-> Accuracy = (TP + TN) / (TP + TN + FP + FN)
+
+Type 1 and Type 2 errors:
+-> Type 1 error = False Positive (FP) = false alarm. Fire alarm rings, but there is no fire. Spam filter: real mail goes to spam.
+-> Type 2 error = False Negative (FN) = missed it. Fire, but no alarm. Spam filter: spam reaches the inbox.
+-> Which is worse depends on the job:
+      -> Spam filter: Type 1 is worse (you may lose an important mail).
+      -> Cancer test: Type 2 is worse (a sick person is missed).
+
+Important points:
+-> Never report accuracy alone. Always show the confusion matrix with it.
+-> Always compare with a lazy baseline (always say the biggest class). Our model must beat it.
+-> Check class balance first. If one class is much bigger, accuracy is not trusted.
+-> Use stratify=y in train_test_split, so train and test have the same share of each class.
+-> Report on TEST data only.
+-> Business decides which mistake costs more, then the metric and threshold are chosen from that.
+-> sklearn layout: confusion_matrix gives [[TN, FP], [FN, TP]].
+
+Code:
+from sklearn.dummy import DummyClassifier
+from sklearn.metrics import accuracy_score, confusion_matrix
+
+lazy = DummyClassifier(strategy="most_frequent").fit(X_train, y_train)
+accuracy_score(y_test, lazy.predict(X_test))          # baseline to beat
+
+y_pred = model.predict(X_test)
+accuracy_score(y_test, y_pred)                        # model accuracy
+cm = confusion_matrix(y_test, y_pred)                 # [[TN, FP], [FN, TP]]
+tn, fp, fn, tp = cm.ravel()
+
+// **********            Precision, Recall and F1 Score          ***********
+
+Definition:
+-> Precision = when the model says "positive", how often is it right?
+-> Recall = of all the real positives, how many did the model catch?
+-> F1 Score = one number that joins precision and recall. It is low if either one is low.
+
+Why: Accuracy can lie. Precision and recall show how good the model is on the rare class (like spam or churn). F1 gives one number to compare models.
+
+Real life (needed to understand): Spam filter. 1000 mails, 100 are spam.
+-> TP = 80 (spam caught), FN = 20 (spam missed), FP = 10 (real mails sent to spam), TN = 890.
+-> Accuracy = 97%, looks great. Now the better questions:
+-> Precision: look at mails the filter called spam (80 + 10 = 90). Really spam = 80. Precision = 80 / 90 = 0.89.
+-> Recall: look at mails that were really spam (80 + 20 = 100). Caught = 80. Recall = 80 / 100 = 0.80.
+-> Lazy filter ("never spam") has TP = 0, so recall = 0. This shows it is useless, even if accuracy is 95%.
+
+Formula:
+-> Precision = TP / (TP + FP)
+-> Recall    = TP / (TP + FN)
+-> F1        = 2 · P · R / (P + R)         (same as 2 / (1/P + 1/R))
+-> Fβ        = (1 + β²) · P · R / (β² · P + R)
+
+Easy way to remember:
+-> Precision = quality of my "positive" calls. Look at what the model SAID.
+-> Recall = how much of the real positives I FOUND. Look at what REALLY happened.
+-> High precision = few false alarms. High recall = few misses.
+
+Tug of war (threshold):
+-> Model says "positive" when p >= threshold (default 0.5).
+-> Raise threshold (0.9): fewer false alarms, precision UP, but more misses, recall DOWN.
+-> Lower threshold (0.2): catches more, recall UP, but more false alarms, precision DOWN.
+-> We cannot get both to the top. We must choose.
+
+Why F1 and not a normal average:
+-> Cheater model says "spam" for every mail (10% are spam). Recall = 1.0, Precision = 0.1.
+-> Normal average = (0.1 + 1.0) / 2 = 0.55. Looks okay, but the filter is useless.
+-> F1 = 0.18. It tells the truth.
+-> F1 is the harmonic mean. Think of two kids tied together in a race. The team runs at the slow kid's speed.
+-> F1 stays close to the smaller number. If precision OR recall is low, F1 is low. It says "be good at both".
+-> Examples (P, R, normal average, F1):  0.9, 0.9 = 0.90, 0.90  |  0.9, 0.5 = 0.70, 0.64  |  1.0, 0.0 = 0.50, 0.00
+
+F-beta (F2 and F0.5):
+-> beta is a dial. It says how much more you care about recall.
+-> F1   (beta = 1)   = precision and recall equally important.
+-> F2   (beta = 2)   = recall is 2 times more important. Use when MISSING a case is worse.
+-> F0.5 (beta = 0.5) = precision is 2 times more important. Use when FALSE ALARMS are worse.
+-> Example, P = 0.9 and R = 0.5:  F1 = 0.64,  F2 = 0.55 (recall is weak, so lower),  F0.5 = 0.78 (precision is strong, so higher).
+
+Which one to use (industry standard):
+-> Spam filter (real mail lost is worse)        = Precision, F0.5
+-> Cancer test, fraud (missing a case is worse) = Recall, F2
+-> Churn model (missing a leaver is worse)      = Recall, F2 or F1
+-> Both mistakes equal, or just comparing models = F1 (the default)
+
+Important points:
+-> Business decides which mistake costs more. Then we choose the metric and the threshold.
+-> Look at the rare class (class 1). The big class always looks good.
+-> Print the full report with classification_report, not one number.
+-> Move the threshold to match the need, ex: "we need recall of at least 80%".
+-> Show precision, recall and F1 together, with the confusion matrix.
+-> Calculate on TEST data only.
+
+Code:
+from sklearn.metrics import precision_score, recall_score, f1_score, fbeta_score, classification_report
+
+precision_score(y_test, y_pred)
+recall_score(y_test, y_pred)
+f1_score(y_test, y_pred)
+fbeta_score(y_test, y_pred, beta=2)             # F2, recall matters more
+fbeta_score(y_test, y_pred, beta=0.5)           # F0.5, precision matters more
+classification_report(y_test, y_pred)           # full report per class
+
+# move the threshold
+p = model.predict_proba(X_test)[:, 1]
+y_t = (p >= 0.3).astype(int)                    # lower threshold = higher recall
+
+// **********            ROC Curve and AUC          ***********
+
+Definition:
+-> ROC Curve = a picture. For every threshold, it plots one point: FPR on the x-axis and TPR on the y-axis. Join all points to get the curve.
+-> AUC = Area Under the Curve. It turns the curve into one number between 0 and 1.
+
+Why: Precision and recall change when we move the threshold. So the same model has many scores. To compare Model A and Model B fairly, we need ONE score for the model itself that does not depend on the threshold. That score is AUC.
+
+Formula:
+-> TPR (True Positive Rate) = TP / (TP + FN)     (same as Recall. Higher is better.)
+-> FPR (False Positive Rate) = FP / (FP + TN)    (false alarm rate. Lower is better.)
+-> We want TPR high and FPR low.
+
+How to draw the curve:
+-> Try every threshold. For each one, calculate TPR and FPR. Plot the point (FPR, TPR).
+-> Threshold very high (model says "positive" for nothing) = point at (0, 0), bottom-left.
+-> Threshold very low (model says "positive" for everything) = point at (1, 1), top-right.
+-> Join all the points.
+
+Reading guidelines (how to read the ROC picture):
+-> x-axis = FPR = false alarms. Left is good (few false alarms).
+-> y-axis = TPR = recall = real positives caught. Top is good (many caught).
+-> The dashed diagonal line = coin flip. A random guesser follows this line.
+-> Curve above the dashed line = the model is better than a coin flip.
+-> Curve bends towards the TOP-LEFT corner = better model. Top-left means high TPR with low FPR.
+-> Bigger shaded area under the curve = bigger AUC = better model.
+-> Curve on the dashed line = useless model (AUC = 0.5).
+-> Curve BELOW the dashed line = answers are upside down. Flip the answers and you get a good model.
+-> Each point on the curve is one threshold. Moving along the curve to the right = lower threshold = more caught, but more false alarms.
+-> To compare two models, draw both curves in one picture. The curve that is higher (more top-left) is the better model.
+
+AUC meaning (the six pictures):
+-> AUC = 1.0          = perfect model (curve goes up the left side, then across the top)
+-> AUC 0.9 to 1.0     = excellent
+-> AUC 0.8 to 0.9     = good
+-> AUC 0.7 to 0.8     = okay
+-> AUC = 0.5          = coin flip, useless (curve is the diagonal)
+-> AUC below 0.5      = worse than a coin flip, the model has things upside down
+
+Easy way to understand AUC:
+-> Pick one random positive (ex: spam mail) and one random negative (ex: real mail).
+-> AUC = the chance that the model gives a higher score to the positive one.
+-> AUC 0.9 = 90 times out of 100, the model ranks the spam above the real mail.
+-> AUC 0.5 = just a coin flip.
+-> So AUC measures how well the model SORTS positives above negatives. It does not depend on any threshold.
+
+Industry standard:
+-> Use AUC to choose the model. Then choose the threshold as a separate step, using the business cost.
+-> Pick the threshold from the ROC curve. Common way: the point with the biggest (TPR - FPR). This is called Youden's J. Better: use the real cost of each mistake.
+-> When the positive class is very rare (ex: 1 fraud in 1000), AUC can look great even for a weak model. Use the Precision-Recall curve and PR-AUC (average_precision_score) instead.
+-> Never use AUC alone. It does not tell if "0.8" really means 80%. Also check precision, recall and the confusion matrix at the chosen threshold.
+-> Use cross-validation for AUC, so the number does not depend on one lucky split.
+-> Compare with a baseline. The lazy model has AUC 0.5. Your model must be clearly above it.
+-> AUC needs chances (predict_proba), not classes (predict). With only 0 and 1 you get just one point on the curve.
+
+Code:
+from sklearn.metrics import roc_curve, roc_auc_score, average_precision_score
+from sklearn.model_selection import cross_val_score
+
+p = model.predict_proba(X_test)[:, 1]            # chances, not 0/1
+
+fpr, tpr, thresholds = roc_curve(y_test, p)      # one point for each threshold
+roc_auc_score(y_test, p)                         # AUC
+
+best = (tpr - fpr).argmax()                      # biggest (TPR - FPR)
+thresholds[best]                                 # best threshold (Youden's J)
+
+cross_val_score(model, X, y, cv=5, scoring="roc_auc").mean()    # AUC with cross-validation
+average_precision_score(y_test, p)               # PR-AUC, for rare classes
+
