@@ -1,0 +1,270 @@
+// **********            Probability Basics          ***********
+
+Probability:
+-> Definition: the chance that something happens. A number from 0 to 1. P(A) = ways A can happen / all possible ways.
+-> Code: df["Churn"].mean()
+
+Conditional Probability:
+-> Definition: the chance of A, when we already know B happened. P(A | B) = P(A and B) / P(B). Read "|" as "given that".
+-> Example: P(spam) = 0.10, but P(spam | word "free") = 0.75.
+-> P(A | B) is NOT the same as P(B | A).
+-> Code: df[df["Contract"] == "Month-to-month"]["Churn"].mean()
+
+Independent Events:
+-> Definition: one event does not change the chance of the other. P(A and B) = P(A) × P(B), or P(A | B) = P(A).
+-> Example: two coin tosses. Naive Bayes assumes the columns are independent (this is the "naive" part).
+-> Code: chi2_contingency(pd.crosstab(df["gender"], df["Churn"]))[1]     # big p-value = independent
+
+Mutually Exclusive Events:
+-> Definition: two events that cannot happen together. P(A and B) = 0, so P(A or B) = P(A) + P(B).
+-> Example: one die roll cannot show 2 and 5 together. A customer has only one contract type.
+-> If they can overlap: P(A or B) = P(A) + P(B) - P(A and B).
+-> Code: ((df["Contract"] == "Month-to-month") & (df["Contract"] == "Two year")).mean()     # 0
+
+Mix-up to avoid:
+-> Mutually exclusive = cannot happen together. Independent = do not affect each other. They are almost opposite.
+-> If A happens and B becomes impossible, then A affects B. So they are not independent.
+
+
+// **********            Bayes Theorem          ***********
+
+Definition: Bayes Theorem flips a probability. We often know P(B | A), but we want P(A | B). Bayes gives us the second one from the first one.
+
+Why: Easy to know: "Of all spam mails, how many have the word free?" (look in the spam folder). What we want: "This new mail has the word free. How likely is it spam?"
+
+Formula:
+-> P(A | B) = P(B | A) × P(A) / P(B)
+-> Prior      P(A)     = chance BEFORE we see the clue (how common is spam?)
+-> Likelihood P(B | A) = how often the clue shows up if A is true (how often does spam have "free"?)
+-> Evidence   P(B)     = how often the clue shows up in ALL mails
+-> Posterior  P(A | B) = chance AFTER we see the clue. This is the answer.
+-> In one line: new belief = old belief × how strongly the clue points to it.
+
+How to get P(B) when we don't have it:
+-> P(B) = P(B | A) × P(A) + P(B | not A) × P(not A)
+
+Example 1 (spam):
+-> 1000 mails, 100 spam. 30 spam mails have "free". 10 real mails have "free" (out of 900).
+-> Prior = 0.10, Likelihood = 0.30, Evidence = 0.30×0.10 + 0.011×0.90 = 0.04
+-> Posterior = 0.30 × 0.10 / 0.04 = 0.75
+-> One word moved the chance of spam from 10% to 75%.
+
+Example 2 (medical test, needed to understand the base rate):
+-> 1% of people are sick. Test finds 99% of sick people. Test gives a false alarm for 5% of healthy people.
+-> Imagine 10,000 people: 100 sick, 9,900 healthy.
+-> Positive among sick = 99. Positive among healthy = 495. Total positive = 594.
+-> Really sick among positives = 99 / 594 = 17%, NOT 99%.
+-> Why: the disease is rare, so there are many healthy people, and even a small false alarm rate gives more false positives than real ones.
+-> This mistake is called the base rate fallacy.
+
+Important points:
+-> P(A | B) is NOT the same as P(B | A). Never mix them.
+-> Always use the prior (base rate). Rare events give many false alarms.
+-> Explain with counts ("out of 10,000 people...") not formulas. Managers and doctors understand counts.
+-> The prior is just the share of each class in the training data.
+-> Today's posterior becomes tomorrow's prior when new clues come (Bayesian updating).
+-> In Naive Bayes, P(B) is the same for all classes, so we skip it and compare only the top part.
+
+Code (own small dataset, 10 mails: 4 spam, 6 real):
+import pandas as pd
+
+mails = pd.DataFrame({
+    "has_free": [1, 1, 1, 0, 1, 0, 0, 0, 0, 0],
+    "spam":     [1, 1, 1, 1, 0, 0, 0, 0, 0, 0],
+})
+
+prior      = mails["spam"].mean()                                # P(spam) = 0.4
+likelihood = mails[mails["spam"] == 1]["has_free"].mean()        # P(free | spam) = 0.75
+evidence   = mails["has_free"].mean()                            # P(free) = 0.4
+posterior  = likelihood * prior / evidence                       # P(spam | free) = 0.75
+
+mails[mails["has_free"] == 1]["spam"].mean()                     # count directly = 0.75 (same)
+
+def bayes(prior, hit, false_alarm):
+    return hit * prior / (hit * prior + false_alarm * (1 - prior))
+
+bayes(0.01, 0.99, 0.05)                                          # 0.167, the medical test
+
+
+
+// **********            Naive Bayes Intuition and Maths          ***********
+
+Definition: Naive Bayes is a classifier that uses Bayes Theorem with many clues (columns). It "naively" assumes every clue is independent of the others. It scores each class and picks the class with the biggest score.
+
+Why: A real mail has many clues (free, offer, win, money). Bayes needs P(free, offer, win, money | spam), meaning how many spam mails have ALL the words together. We almost never have enough data to count that. The naive trick fixes this: count each clue alone, then multiply.
+
+Formula:
+-> Bayes:        P(spam | clues) = P(clues | spam) × P(spam) / P(clues)
+-> Naive trick:  P(free, offer | spam) = P(free | spam) × P(offer | spam)
+-> Score of a class = P(class) × P(x1 | class) × P(x2 | class) × ...
+-> We skip P(clues), because it is the same for every class. Pick the class with the biggest score.
+-> To get chances, divide each score by the total of all scores.
+
+Why "naive":
+-> We pretend the clues are independent. In real life they are not ("free" and "offer" come together).
+-> The chance numbers are a bit off, but the winning class is usually still right. That is all we need.
+
+Example (10 mails, 4 spam and 6 real, new mail has "free" and "offer"):
+-> Prior: P(spam) = 0.4, P(real) = 0.6
+-> Spam: P(free | spam) = 0.75, P(offer | spam) = 0.75
+-> Real: P(free | real) = 0.167, P(offer | real) = 0.167
+-> Spam score = 0.4 × 0.75 × 0.75 = 0.225
+-> Real score = 0.6 × 0.167 × 0.167 = 0.0167
+-> Spam wins. P(spam) = 0.225 / (0.225 + 0.0167) = 0.93
+
+Two problems and their fixes:
+-> Zero problem: a word never seen in spam gives P = 0. One zero kills the whole multiplication.
+      -> Fix: Laplace smoothing. Add 1 to every count, so nothing is exactly zero.
+      -> In sklearn it is alpha. alpha = 1 is the default.
+-> Tiny numbers problem: multiplying 1000 small numbers gives a number so tiny the computer rounds it to 0.
+      -> Fix: use logs. Log turns multiply into add. sklearn does this inside.
+
+Important points:
+-> Very fast. Training is just counting.
+-> Needs very little data. Handles thousands of columns (like words).
+-> Types: BernoulliNB (0/1 columns), MultinomialNB (word counts), GaussianNB (numbers, Topic 5), CategoricalNB (category columns).
+-> Keep smoothing on. Choose alpha by cross-validation (0.01, 0.1, 1).
+-> Chances are often too close to 0 or 1. Use it to rank and classify. Calibrate if you need reliable chances.
+-> If the same information is added twice (two similar columns), it is counted twice and the model gets over-confident. Remove duplicates.
+-> Good fast baseline for text. If a stronger model does not beat it by much, keep the simple one.
+-> partial_fit lets it learn from new data without starting again.
+
+Code (own small data, sklearn):
+import pandas as pd
+from sklearn.naive_bayes import BernoulliNB
+
+mails = pd.DataFrame({
+    "free":  [1, 1, 1, 0, 1, 0, 0, 0, 0, 0],
+    "offer": [1, 0, 1, 1, 0, 0, 0, 1, 0, 0],
+    "spam":  [1, 1, 1, 1, 0, 0, 0, 0, 0, 0],
+})
+X = mails[["free", "offer"]]
+y = mails["spam"]
+new = pd.DataFrame({"free": [1], "offer": [1]})
+
+model = BernoulliNB(alpha=1)                    # alpha = smoothing
+model.fit(X, y)                                 # learns by counting
+
+model.predict(new)                              # [1] = spam
+model.predict_proba(new)                        # [chance of real, chance of spam]
+np.exp(model.class_log_prior_)                  # priors: [0.6, 0.4]
+np.exp(model.feature_log_prob_)                 # P(word = 1 | class), one row per class
+
+BernoulliNB(alpha=1e-10).fit(X, y).predict_proba(new)    # almost no smoothing: about [0.07, 0.93], same as by hand
+
+// **********            Naive Bayes in Code          ***********
+
+Definition: Using Naive Bayes in sklearn. Training is just counting. The 4 steps are: 1) make the data, 2) turn everything into numbers, 3) fit (count), 4) predict.
+
+Why: sklearn only takes numbers. Categories need an encoder and text needs a vectorizer. Then Naive Bayes counts each column alone.
+
+Which Naive Bayes to use:
+-> Categories (Sunny, Rainy)       = CategoricalNB
+-> Word COUNTS in text             = MultinomialNB
+-> 0/1 columns (word is there or not) = BernoulliNB
+-> Numbers (25.5, 80)              = GaussianNB (next topic)
+
+Important points:
+-> alpha = smoothing. Default 1. Tune with cross-validation (0.01, 0.1, 1).
+-> Ordinal numbers (0, 1, 2) are fine for CategoricalNB. They are only labels. Naive Bayes never treats 2 as bigger than 1.
+-> Use the SAME encoder for training and new data (enc.transform, not fit_transform).
+-> predict_proba columns follow model.classes_ (alphabetical). Check it before reading.
+-> Mixed clues give unsure answers (close to 50-50).
+-> A word never seen in training is ignored, so it does not break the model.
+-> A new category never seen in training can break CategoricalNB. Clean the data or set min_categories.
+-> Put the vectorizer and the model in a Pipeline, so training and new data use the same steps.
+-> Small data (14 rows) is used only to learn the idea. In real work, use train_test_split or cross_val_score, and check precision, recall and F1.
+-> For real text use TfidfVectorizer (gives less weight to very common words). MultinomialNB works with it.
+-> Chances are often too sure. Use them to rank, not as exact numbers.
+
+Code 1 (categories, play cricket or not):
+days = pd.DataFrame({
+    "Weather": ["Sunny","Sunny","Overcast","Rainy","Rainy","Rainy","Overcast","Sunny","Sunny","Rainy","Sunny","Overcast","Overcast","Rainy"],
+    "Temp":    ["Hot","Hot","Hot","Mild","Cool","Cool","Cool","Mild","Cool","Mild","Mild","Mild","Hot","Mild"],
+    "Wind":    ["Weak","Strong","Weak","Weak","Weak","Strong","Strong","Weak","Weak","Weak","Strong","Strong","Weak","Strong"],
+    "Play":    ["No","No","Yes","Yes","Yes","No","Yes","No","Yes","Yes","Yes","Yes","Yes","No"],
+})
+X = days[["Weather", "Temp", "Wind"]]
+y = days["Play"]
+
+enc = OrdinalEncoder()                      # words to numbers
+Xn = enc.fit_transform(X)
+model = CategoricalNB(alpha=1).fit(Xn, y)   # just counting
+
+new = pd.DataFrame({"Weather": ["Sunny"], "Temp": ["Cool"], "Wind": ["Strong"]})
+model.predict(enc.transform(new))           # ['No']
+model.predict_proba(enc.transform(new))     # [[0.567 0.433]] = [No, Yes], a close call
+np.exp(model.class_log_prior_)              # priors [0.357 0.643] = [No, Yes]
+
+Code 2 (text, spam or not):
+texts = ["win free money now", "free offer win prize", "limited offer free gift", "claim your free prize now",
+         "meeting at 10 tomorrow", "lunch with the team", "project report attached", "see you at the meeting"]
+labels = [1, 1, 1, 1, 0, 0, 0, 0]           # 1 = spam
+
+model = make_pipeline(CountVectorizer(), MultinomialNB(alpha=1))
+model.fit(texts, labels)                    # words to counts, then counting
+
+model.predict(["free money offer", "team meeting tomorrow", "free lunch meeting"])    # [1 0 0]
+model.predict_proba(["free lunch meeting"])                                           # [[0.564 0.436]] unsure, mixed clues
+
+// **********            Gaussian Naive Bayes (Numerical Data)          ***********
+
+Definition: Gaussian Naive Bayes is Naive Bayes for number columns. For each class and each column, it learns two things: the usual value (mean) and the spread (variance). The closer a new number is to a class's usual value, the more points that class gets.
+
+Why: Counting works for words and categories ("3 of 4 spam mails have the word free"). It does not work for numbers. How many apples weigh exactly 158 g? Maybe none.
+
+Simple story:
+-> Closed eyes. A friend says the fruit weighs 158 g.
+-> Apples are usually about 162 g. Oranges are usually about 143 g.
+-> 158 is close to 162 and far from 143. So guess apple.
+-> The model does the same thing for every column, then multiplies the points.
+
+What the model learns (only 2 numbers):
+-> Mean (μ) = the usual value of a class.
+-> Variance (σ²) = how much the fruits differ from each other. Small = all almost the same. Big = some light, some heavy.
+
+The bell:
+-> Most apples are near the usual weight. Few are far. Drawn as a picture, it looks like a bell.
+-> The bell is just a closeness score. Near the usual value = high score. Far = low score.
+
+Formula:
+-> P(x | class) = 1 / (σ·√(2π)) × e^( -(x - μ)² / (2σ²) )      (height of the bell at x)
+-> Score of a class = P(class) × height(column 1) × height(column 2) × ...
+-> Pick the class with the biggest score.
+-> Do not memorize the formula. Remember: closer to the usual value = higher score.
+
+Example (weight 158 g, diameter 7.1 cm):
+-> Apple is closer on weight (about 3 times better) and on diameter (about 2 times better).
+-> Multiply: 3 × 2 = about 6 times more likely to be an apple.
+-> Priors are 50-50, so nothing changes. Final: about 87% Apple.
+
+Important points:
+-> The "height" is a density, not a real probability. It can be more than 1 for a very narrow bell. This is fine, because we only compare the scores.
+-> Scaling is not needed. Each column and class has its own mean and variance.
+-> Check that each column looks like a bell (histogram per class). If skewed (income, price), use log or PowerTransformer first.
+-> Related columns (weight and diameter) break the independence idea. Remove one if the score is weak.
+-> var_smoothing (default 1e-9) adds a tiny number to every variance, so it never divides by zero. Bigger value = wider bell, calmer model. Try 1e-9 up to 1e-1 with cross-validation.
+-> Chances are often too sure. A fruit of 200 g and 9 cm gets 100% Apple, even though no apple was ever that big. Use chances to rank, or calibrate them.
+-> Mixed data (numbers and categories): bin the numbers (KBinsDiscretizer) and use CategoricalNB, or use a tree model.
+-> Fast first model. Small data (12 rows) is only for learning the idea. In real work, split the data and check F1.
+
+Code:
+fruits = pd.DataFrame({
+    "weight":   [150, 160, 170, 155, 165, 175, 130, 140, 150, 135, 145, 160],
+    "diameter": [7.0, 7.5, 7.8, 7.2, 7.6, 7.9, 6.0, 6.5, 6.8, 6.2, 6.6, 7.0],
+    "fruit":    ["Apple"] * 6 + ["Orange"] * 6,
+})
+X = fruits[["weight", "diameter"]]
+y = fruits["fruit"]
+
+model = GaussianNB()
+model.fit(X, y)                                 # finds mean and variance for each class and column
+
+model.theta_                                    # means:     [[162.5  7.5 ], [143.33  6.52]]
+model.var_                                      # variances: [[ 72.92  0.1 ], [ 97.22  0.11]]
+model.class_prior_                              # priors: [0.5 0.5]
+
+new = pd.DataFrame({"weight": [158], "diameter": [7.1]})
+model.predict(new)                              # ['Apple']
+model.predict_proba(new)                        # [[0.866 0.134]] = [Apple, Orange]
+
