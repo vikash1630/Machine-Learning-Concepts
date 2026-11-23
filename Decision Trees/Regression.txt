@@ -1,0 +1,149 @@
+// **********            Regression Trees          ***********
+
+Definition: Decision Tree used to predict continuous numerical values.
+
+Examples:
+-> House prices.
+-> Salary prediction.
+-> Temperature prediction.
+
+Core Idea:
+-> Split data into groups with similar target values.
+-> Each leaf predicts a numerical value.
+
+// **********            Split Selection          ***********
+
+Classification:
+-> Uses Entropy or Gini.
+
+Regression:
+-> Uses MSE or MAE.
+-> Best split = Lowest weighted child error.
+
+MSE Formula:
+MSE = (1/n) * sum((yi - mean(y))^2)
+
+Weighted Child MSE:
+= (nL/n * MSE_L) + (nR/n * MSE_R)
+
+// **********            Numerical Example          ***********
+
+Data: [10, 12, 14, 40, 42, 44]
+
+After splitting:
+-> Left: [10, 12, 14]
+-> Right: [40, 42, 44]
+
+Left prediction:
+= (10 + 12 + 14) / 3 = 12
+
+Right prediction:
+= (40 + 42 + 44) / 3 = 42
+
+Why good?
+-> Values within each group are close.
+-> Prediction errors are small.
+
+// **********            Leaf Prediction          ***********
+
+-> MSE / Squared Error = Mean of target values.
+-> MAE / Absolute Error = Median of target values.
+
+Example:
+Leaf: [20, 30, 40]
+Prediction = Mean = 30.
+
+Important:
+-> Every sample reaching the same leaf gets the same prediction.
+-> Regression Trees produce piecewise constant predictions.
+
+// **********            Python Implementation          ***********
+
+from sklearn.tree import DecisionTreeRegressor
+
+model = DecisionTreeRegressor(
+    criterion="squared_error",
+    max_depth=3
+)
+
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+
+Other criteria:
+-> "absolute_error" = MAE.
+-> "friedman_mse" = Friedman MSE.
+-> "poisson" = Poisson deviance.
+
+// **********            Classification vs Regression          ***********
+
+Classification:
+-> Predicts categories.
+-> Uses Gini / Entropy.
+-> Leaf predicts a class.
+
+Regression:
+-> Predicts numerical values.
+-> Uses MSE / MAE.
+-> Leaf predicts a number.
+
+Remember:
+Regression Tree = Continuous target prediction.
+Best Split = Minimum weighted child error.
+MSE = Mean-based error.
+MAE = Absolute error.
+
+
+// **********            Decision Tree Visualization using dtreeviz          ***********
+
+Definition:
+dtreeviz is a Python library used to visualize and understand Decision Trees.
+
+Why dtreeviz?
+-> Shows tree structure and splitting conditions.
+-> Displays feature and class distributions.
+-> Helps understand how a tree makes predictions.
+
+Installation:
+pip install dtreeviz
+
+// **********            Python Implementation          ***********
+
+from sklearn.tree import DecisionTreeClassifier
+import dtreeviz
+
+model = DecisionTreeClassifier(max_depth=3)
+model.fit(X_train, y_train)
+
+viz_model = dtreeviz.model(
+    model,
+    X_train=X_train,
+    y_train=y_train,
+    feature_names=X_train.columns,
+    target_name="Target",
+    class_names=["Class 0", "Class 1"]
+)
+
+viz_model.view()
+
+Important:
+-> dtreeviz.model() = Creates visualization model.
+-> view() = Generates visualization.
+-> show() = Opens visualization.
+-> save() = Saves visualization.
+
+// **********            plot_tree() vs dtreeviz          ***********
+
+plot_tree():
+-> Built into sklearn.
+-> Basic tree visualization.
+-> Simple to use.
+
+dtreeviz:
+-> Separate library.
+-> Detailed tree visualization.
+-> Shows data distributions and split information.
+
+Remember:
+dtreeviz = Decision Tree visualization.
+pip install dtreeviz = Installation.
+dtreeviz.model() = Creates visualization adapter.

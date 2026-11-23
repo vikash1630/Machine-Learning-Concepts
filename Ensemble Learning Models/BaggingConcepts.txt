@@ -1,0 +1,428 @@
+
+
+// **********            Bagging: Introduction          ***********
+
+Definition:
+Bagging (Bootstrap Aggregating) trains multiple models on different
+bootstrap samples and combines their predictions.
+
+Two Main Steps:
+1. Bootstrap = Creating different datasets using sampling with replacement.
+2. Aggregating = Combining predictions from multiple models.
+
+// **********            Bootstrap Sampling          ***********
+
+Definition:
+Randomly selects samples from the original dataset with replacement.
+
+Important:
+-> Selected sample is put back before the next selection.
+-> Same sample can appear multiple times.
+-> Some samples may not be selected.
+-> Usually, bootstrap sample size = Original dataset size.
+
+Example:
+Original = [A, B, C, D, E]
+
+Bootstrap Samples:
+-> [A, B, B, D, E]
+-> [A, C, C, D, D]
+-> [B, B, C, E, E]
+
+// **********            How Bagging Works          ***********
+
+1. Take the original training dataset.
+2. Generate multiple bootstrap samples.
+3. Train a separate model on each sample.
+4. Models train independently and can run in parallel.
+5. Combine predictions to get the final output.
+
+// **********            Prediction Aggregation          ***********
+
+Classification:
+-> Majority Voting.
+-> Most predicted class wins.
+
+Regression:
+-> Averaging.
+-> Final prediction = Mean of model predictions.
+
+Example:
+Predictions = [100, 120, 110]
+Final = (100 + 120 + 110) / 3 = 110.
+
+// **********            Why Bagging?          ***********
+
+-> Primarily reduces Variance.
+-> Makes predictions more stable.
+-> Useful with unstable models like Decision Trees.
+-> Does not necessarily reduce Bias or guarantee better performance.
+
+Remember:
+Bagging = Bootstrap Aggregating.
+Bootstrap = Sampling with replacement.
+Aggregating = Combining predictions.
+Classification = Majority Voting.
+Regression = Averaging.
+Main Goal = Reduce Variance.
+
+
+// **********            Bagging Classifier          ***********
+
+Definition:
+Bagging Classifier trains multiple copies of a classification
+algorithm on different samples and combines predictions using
+Majority Voting.
+
+Core Idea:
+-> Generate different training samples.
+-> Train one model on each sample.
+-> Combine predictions using Majority Voting.
+-> Final output = Most frequently predicted class.
+
+Base Estimators:
+-> Decision Tree
+-> SVM
+-> KNN
+-> Other classification algorithms
+
+// **********            Practical Implementation          ***********
+
+Dataset:
+from sklearn.datasets import make_classification
+
+X, y = make_classification(
+    n_samples=10000,
+    n_features=10,
+    n_informative=3,
+    random_state=42
+)
+
+Single Decision Tree:
+from sklearn.tree import DecisionTreeClassifier
+
+dt = DecisionTreeClassifier(random_state=42)
+dt.fit(X_train, y_train)
+
+-> CampusX notebook accuracy = 87.55%.
+
+Bagging with Decision Trees:
+from sklearn.ensemble import BaggingClassifier
+
+bag = BaggingClassifier(
+    estimator=DecisionTreeClassifier(),
+    n_estimators=500,
+    max_samples=0.5,
+    bootstrap=True,
+    random_state=42,
+    n_jobs=-1
+)
+
+bag.fit(X_train, y_train)
+y_pred = bag.predict(X_test)
+
+-> CampusX notebook accuracy = 91.65%.
+-> Combining multiple trees improved performance.
+
+Important:
+-> Bagging is not restricted to Decision Trees.
+-> SVM, KNN and other classifiers can also be used.
+-> CampusX SVM Bagging example reported 90.1% accuracy.
+
+// **********            Sampling Techniques in Bagging          ***********
+
+1. Bagging:
+-> Selects rows with replacement.
+-> A row can appear multiple times.
+-> Some rows may be left out.
+
+2. Pasting:
+-> Selects rows without replacement.
+-> A row cannot repeat within the same sample.
+
+bootstrap=True  = Bagging
+bootstrap=False = Pasting
+
+3. Random Subspaces:
+-> Selects random subsets of features (columns).
+-> Uses all training rows.
+-> Different models receive different feature subsets.
+
+4. Random Patches:
+-> Selects random subsets of both rows and features.
+-> Combines row sampling and feature sampling.
+
+Comparison:
+
+Technique          Rows                  Features
+Bagging            With replacement      All
+Pasting            Without replacement   All
+Random Subspaces   All rows               Subsets
+Random Patches     Row subsets            Subsets
+
+Important:
+-> bootstrap controls row sampling with replacement.
+-> bootstrap_features controls feature sampling with replacement.
+
+// **********            Out-of-Bag (OOB) Score          ***********
+
+Definition:
+Samples not selected in a particular bootstrap sample are called
+Out-of-Bag samples.
+
+Example:
+Original = [A, B, C, D, E]
+Bootstrap = [A, B, B, D, E]
+
+-> In-bag = A, B, D, E
+-> OOB = C
+
+How OOB Score Works:
+-> Each model leaves some training samples unused.
+-> Use those models to predict the samples they did not train on.
+-> Combine their predictions.
+-> Compare predictions with actual labels.
+-> Calculate accuracy = OOB Score.
+
+Why useful?
+-> Estimates model performance using training data.
+-> Does not require a separate validation set.
+-> Helps evaluate generalization.
+
+OOB Probability (Full-size Bootstrap Sample):
+
+P(sample not selected) = (1 - 1/N)^N
+
+As N becomes large:
+
+P(OOB) ≈ e^(-1) ≈ 36.8%
+
+-> Approximately 36.8% of unique rows are left out
+   from each full-size bootstrap sample.
+-> Approximately 63.2% are included.
+
+Important:
+-> This 36.8% applies to full-size bootstrap samples.
+-> Smaller bootstrap samples leave out a larger proportion.
+-> OOB score is an estimate, not a replacement for final test accuracy.
+
+// **********            OOB Python Implementation          ***********
+
+bag = BaggingClassifier(
+    estimator=DecisionTreeClassifier(),
+    n_estimators=500,
+    max_samples=0.25,
+    bootstrap=True,
+    oob_score=True,
+    random_state=42
+)
+
+bag.fit(X_train, y_train)
+
+print(bag.oob_score_)
+
+Important:
+-> bootstrap=True is required.
+-> Use enough estimators for reliable OOB predictions.
+-> oob_score_ gives the OOB evaluation score.
+
+// **********            Bagging Classifier Hyperparameters          ***********
+
+estimator:
+-> Base algorithm used by each model.
+
+n_estimators:
+-> Number of base models.
+
+max_samples:
+-> Number or proportion of training rows selected per model.
+
+max_features:
+-> Number or proportion of features selected per model.
+
+bootstrap:
+-> True = Row sampling with replacement.
+-> False = Row sampling without replacement.
+
+bootstrap_features:
+-> Controls feature sampling with replacement.
+
+oob_score:
+-> Enables Out-of-Bag evaluation.
+
+n_jobs:
+-> Controls parallel execution.
+-> -1 = Uses all available CPU cores.
+
+random_state:
+-> Controls randomness for reproducible results.
+
+// **********            Hyperparameter Tuning          ***********
+
+GridSearchCV:
+-> Tests different hyperparameter combinations.
+-> Uses cross-validation to evaluate them.
+-> Finds the best parameter combination.
+
+from sklearn.model_selection import GridSearchCV
+
+parameters = {
+    'n_estimators': [50, 100, 500],
+    'max_samples': [0.1, 0.4, 0.7, 1.0],
+    'bootstrap': [True, False],
+    'max_features': [0.1, 0.4, 0.7, 1.0]
+}
+
+search = GridSearchCV(
+    BaggingClassifier(),
+    parameters,
+    cv=5
+)
+
+search.fit(X_train, y_train)
+
+print(search.best_params_)
+print(search.best_score_)
+
+-> cv=5 = 5-fold cross-validation.
+-> best_params_ = Best hyperparameter combination.
+-> best_score_ = Best average cross-validation score.
+
+Important:
+-> GridSearchCV can be computationally expensive.
+-> RandomizedSearchCV is another tuning option.
+-> Choose max_samples and max_features based on validation results.
+
+// **********            Important Takeaways          ***********
+
+-> Bagging Classifier = Multiple models + Majority Voting.
+-> Pasting = Row sampling without replacement.
+-> Random Subspaces = Feature sampling.
+-> Random Patches = Row + Feature sampling.
+-> OOB Score = Evaluation using unused bootstrap samples.
+-> GridSearchCV = Hyperparameter tuning.
+
+Main Goal of Bagging:
+Reduce Variance and make predictions more stable.
+
+
+
+// **********            Bagging Regressor          ***********
+
+Definition:
+Combines predictions from multiple regression models trained
+on different bootstrap samples.
+
+Core Idea:
+-> Train multiple regressors independently.
+-> Each model predicts a numerical value.
+-> Average all predictions to get the final output.
+
+// **********            Prediction Aggregation          ***********
+
+Formula:
+
+y_pred = (Prediction_1 + Prediction_2 + ... + Prediction_n) / n
+
+-> Default aggregation = Arithmetic Mean.
+-> Each model contributes equally.
+
+// **********            Base Estimators          ***********
+
+-> Decision Tree Regressor (Default).
+-> Linear Regression.
+-> KNN Regressor.
+-> Other regression algorithms.
+
+// **********            Important Hyperparameters          ***********
+
+estimator:
+-> Base regression algorithm.
+
+n_estimators:
+-> Number of models.
+
+max_samples:
+-> Number or proportion of rows per model.
+
+max_features:
+-> Number or proportion of features per model.
+
+bootstrap:
+-> True = Sampling with replacement.
+-> False = Sampling without replacement.
+
+bootstrap_features:
+-> Controls feature sampling with replacement.
+
+oob_score:
+-> Enables Out-of-Bag evaluation.
+
+n_jobs:
+-> -1 = Uses all available CPU cores.
+
+// **********            Evaluation          ***********
+
+R² Score:
+-> Measures how well the model explains target variation.
+-> 1 = Perfect prediction.
+-> 0 = Same as predicting the target mean.
+-> Negative = Worse than predicting the target mean.
+
+OOB Score:
+-> Estimates performance using unused bootstrap samples.
+-> Available through oob_score_.
+-> For BaggingRegressor, default OOB score uses R².
+
+// **********            Python Implementation          ***********
+
+from sklearn.ensemble import BaggingRegressor
+from sklearn.tree import DecisionTreeRegressor
+
+model = BaggingRegressor(
+    estimator=DecisionTreeRegressor(),
+    n_estimators=100,
+    max_samples=0.5,
+    bootstrap=True,
+    oob_score=True,
+    random_state=42,
+    n_jobs=-1
+)
+
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+
+print(model.oob_score_)
+
+// **********            Hyperparameter Tuning          ***********
+
+-> GridSearchCV = Tests parameter combinations using cross-validation.
+-> best_params_ = Best parameter combination.
+-> best_score_ = Best cross-validation score.
+
+Important:
+-> Keep test data separate during tuning.
+-> Higher training score alone does not guarantee generalization.
+
+// **********            Bagging Classifier vs Regressor          ***********
+
+Bagging Classifier:
+-> Predicts categories.
+-> Aggregation = Majority Voting.
+
+Bagging Regressor:
+-> Predicts numerical values.
+-> Aggregation = Averaging.
+
+Remember:
+Bagging Regressor = Multiple regressors + Average.
+Main Goal = Reduce Variance.
+Default Estimator = DecisionTreeRegressor.
+
+
+
+
+
+
+
+

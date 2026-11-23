@@ -1,0 +1,229 @@
+// **********            Decision Trees: Geometric Intuition          ***********
+
+Definition: Decision Tree is a supervised ML algorithm that makes predictions by repeatedly splitting data based on feature conditions.
+
+Core idea:
+-> Ask a question about a feature and divide data based on the answer.
+-> Repeat until we reach a final prediction.
+
+Terminology:
+-> Root Node: Starting point containing the entire dataset.
+-> Decision Node: Checks a condition and splits data.
+-> Leaf Node: Final node containing the prediction.
+-> Branch: Connection between nodes.
+
+Geometric Intuition:
+-> Each split creates a decision boundary.
+-> Numerical features create horizontal or vertical boundaries in 2D.
+-> Multiple splits create rectangular decision regions.
+-> Each region represents a leaf node.
+-> Decision Trees create axis-aligned boundaries.
+
+Split Selection:
+-> Goal = Create child nodes containing similar classes.
+-> Use Entropy or Gini to measure impurity.
+-> Use Information Gain to measure impurity reduction.
+
+
+// **********            Decision Trees: Entropy          ***********
+
+Definition: Entropy measures impurity or uncertainty based on class distribution.
+
+Formula:
+H(S) = -sum(pi * log2(pi))
+
+Examples:
+-> 10 Pass, 0 Fail = Entropy 0 (Pure).
+-> 5 Pass, 5 Fail = Entropy 1 (Maximum impurity).
+
+Important points:
+-> Pure node = Entropy 0.
+-> Equal class distribution = Maximum entropy.
+-> Binary classification maximum = 1.
+-> Higher entropy = More impurity.
+-> 0*log2(0) is treated as 0.
+
+
+// **********            Decision Trees: Gini Impurity          ***********
+
+Definition: Gini measures the probability of incorrect classification when assigning a class randomly according to the node's class distribution.
+
+Formula:
+Gini(S) = 1 - sum(pi^2)
+
+Examples:
+-> 10 Pass, 0 Fail = Gini 0.
+-> 5 Pass, 5 Fail = Gini 0.5.
+
+Important points:
+-> Pure node = Gini 0.
+-> Binary classification maximum = 0.5.
+-> Higher Gini = More impurity.
+-> Computationally simpler than Entropy.
+
+
+// **********            Entropy vs Gini          ***********
+
+-> Entropy uses logarithms; Gini uses squared probabilities.
+-> Entropy maximum (binary) = 1.
+-> Gini maximum (binary) = 0.5.
+-> Both measure impurity and prefer purer child nodes.
+-> Scikit-learn default criterion = Gini.
+
+
+// **********            Decision Trees: Information Gain          ***********
+
+Definition: Information Gain measures how much entropy decreases after splitting a dataset.
+
+Formula:
+IG = Parent Entropy - Weighted Child Entropy
+
+IG = H(S) - sum((|Sj| / |S|) * H(Sj))
+
+Example:
+Parent: 5 Pass, 5 Fail
+Parent Entropy = 1
+
+After splitting:
+-> Left: 4 Pass, 1 Fail.
+-> Right: 1 Pass, 4 Fail.
+-> Each child entropy = 0.722.
+
+Weighted Child Entropy:
+= (5/10 * 0.722) + (5/10 * 0.722)
+= 0.722
+
+Information Gain:
+= 1 - 0.722 = 0.278
+
+Important points:
+-> Higher Information Gain = Better split.
+-> Choose the split with maximum Information Gain.
+-> With Gini, choose maximum Gini reduction.
+-> Splitting continues recursively.
+
+
+// **********            Python Implementation          ***********
+
+from sklearn.tree import DecisionTreeClassifier
+
+model = DecisionTreeClassifier(
+    criterion="entropy",       # Entropy (default is gini)
+    max_depth=3
+)
+
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+
+Important:
+-> criterion="gini" = Gini Impurity.
+-> criterion="entropy" = Entropy.
+-> max_depth = Maximum tree depth.
+
+
+Remember:
+Decision Tree = Feature-based Splitting.
+Entropy = Uncertainty.
+Gini = Impurity.
+Information Gain = Reduction in Entropy.
+Best Split = Maximum Information Gain.
+
+
+// **********            Decision Tree Hyperparameters          ***********
+
+Definition: Hyperparameters control the complexity and behavior of a Decision Tree.
+
+1. max_depth:
+-> Maximum depth of the tree.
+-> Smaller value = Simpler tree.
+-> Larger value = More complex tree.
+
+2. min_samples_split:
+-> Minimum samples required to split a node.
+-> Higher value = Fewer splits.
+
+3. min_samples_leaf:
+-> Minimum samples required in each leaf.
+-> Prevents leaves with very few samples.
+
+4. max_features:
+-> Maximum features considered when finding the best split.
+
+5. criterion:
+-> Defines split quality.
+-> "gini" = Gini Impurity.
+-> "entropy" = Entropy.
+-> "log_loss" = Log Loss.
+
+6. ccp_alpha:
+-> Controls cost-complexity pruning.
+-> Higher value = More pruning.
+-> Removes unnecessary branches.
+
+// **********            Overfitting in Decision Trees          ***********
+
+Definition: Model learns training data too closely, including noise.
+
+Causes:
+-> Excessive tree depth.
+-> Too many branches.
+-> Very few samples in leaf nodes.
+
+Prevention:
+-> Decrease max_depth.
+-> Increase min_samples_split.
+-> Increase min_samples_leaf.
+-> Apply pruning using ccp_alpha.
+
+// **********            Underfitting in Decision Trees          ***********
+
+Definition: Model is too simple to learn important patterns.
+
+Causes:
+-> Very small max_depth.
+-> Too few splits.
+-> Excessive pruning.
+
+Solution:
+-> Allow more splits.
+-> Increase max_depth.
+-> Reduce excessive pruning.
+
+// **********            Bias-Variance Connection          ***********
+
+-> Underfitting = High Bias, Low Variance.
+-> Overfitting = Low Bias, High Variance.
+-> Good fit = Balanced Bias and Variance.
+
+Tree complexity:
+-> Shallow tree = More bias, less variance.
+-> Deep tree = Less bias, more variance.
+
+// **********            Python Implementation          ***********
+
+from sklearn.tree import DecisionTreeClassifier
+
+model = DecisionTreeClassifier(
+    max_depth=4,
+    min_samples_split=10,
+    min_samples_leaf=5,
+    criterion="gini"
+)
+
+model.fit(X_train, y_train)
+
+print("Train:", model.score(X_train, y_train))
+print("Test:", model.score(X_test, y_test))
+
+Interpretation:
+-> High train + Low test score = Possible overfitting.
+-> Low train + Low test score = Possible underfitting.
+-> Good train + Test scores = Better generalization.
+
+Remember:
+max_depth = Tree depth.
+min_samples_split = Minimum samples to split.
+min_samples_leaf = Minimum samples per leaf.
+ccp_alpha = Pruning strength.
+
+

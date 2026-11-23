@@ -1,0 +1,310 @@
+// **********            Introduction to Ensemble Learning          ***********
+
+Definition:
+Ensemble Learning combines predictions from multiple models to produce a better final prediction.
+
+Core Idea:
+-> Instead of depending on one model, combine multiple models.
+-> Individual models = Base Learners.
+-> Combined model = Ensemble Model.
+
+Why Ensemble Learning?
+-> Reduces the impact of individual model errors.
+-> Can improve prediction accuracy.
+-> Often improves generalization.
+
+// **********            Model Diversity          ***********
+
+Definition:
+Diversity means models should make different errors.
+
+-> Identical models making identical mistakes provide little benefit.
+-> Different models making different errors can improve ensemble performance.
+
+Ensemble performance depends on:
+-> Individual model quality.
+-> Diversity between models.
+-> How predictions are combined.
+
+// **********            Types of Ensemble Techniques          ***********
+
+1. Voting:
+-> Combines predictions from multiple models.
+-> Classification = Voting Classifier.
+-> Regression = Averaging predictions.
+
+2. Bagging (Bootstrap Aggregating):
+-> Trains multiple models independently on different data samples.
+-> Main goal = Reduce Variance.
+
+3. Boosting:
+-> Trains models sequentially.
+-> Later models focus on previous errors.
+-> Often reduces Bias.
+
+4. Stacking:
+-> Combines predictions using another model called Meta Learner.
+-> Base models make predictions; Meta Learner produces final output.
+
+// **********            Important Differences          ***********
+
+Voting = Combines independent model predictions.
+Bagging = Independent models trained on different samples.
+Boosting = Sequential model training.
+Stacking = Meta-model combines base model predictions.
+
+// **********            Bias-Variance Connection          ***********
+
+-> High Bias = Underfitting.
+-> High Variance = Overfitting.
+-> Bagging typically reduces Variance.
+-> Boosting often reduces Bias.
+-> Voting and Stacking combine different model predictions.
+
+Remember:
+Ensemble Learning = Combining multiple models.
+Base Learners = Individual models.
+Diversity = Different prediction errors.
+Bagging = Parallel training.
+Boosting = Sequential training.
+Voting = Prediction combination.
+Stacking = Meta Learner.
+
+
+// **********            Voting Ensemble: Introduction          ***********
+
+Definition:
+Voting Ensemble combines predictions from multiple ML models to produce one final prediction.
+
+Core Idea:
+-> Train multiple models.
+-> Collect predictions from each model.
+-> Combine predictions to get final output.
+
+Example:
+Models: Logistic Regression, Decision Tree, KNN.
+
+Predictions:
+-> Logistic Regression = Class A.
+-> Decision Tree = Class B.
+-> KNN = Class A.
+
+Final Prediction = Class A (Majority votes).
+
+// **********            Why Voting Ensemble?          ***********
+
+-> Different algorithms learn patterns differently.
+-> Combining models can reduce individual prediction errors.
+-> Works best when models are reasonably accurate and make different errors.
+
+// **********            Important Characteristics          ***********
+
+-> Models are trained independently.
+-> Different algorithms can be combined.
+-> Models can use the same training dataset.
+-> Supports classification and regression.
+
+// **********            Voting vs Bagging          ***********
+
+Voting:
+-> Combines predictions from multiple models.
+-> Often combines different algorithms.
+-> Models can use the same dataset.
+
+Bagging:
+-> Trains models on different bootstrap samples.
+-> Often uses the same algorithm.
+
+// **********            Types of Voting          ***********
+
+1. Hard Voting:
+-> Combines predicted class labels.
+-> Final class = Majority votes.
+
+2. Soft Voting:
+-> Combines predicted class probabilities.
+-> Final class = Highest average probability.
+
+Remember:
+Voting = Combining model predictions.
+Hard Voting = Class labels.
+Soft Voting = Class probabilities.
+
+
+// **********            Voting Classifier: Hard vs Soft Voting          ***********
+
+Definition:
+Voting Classifier combines predictions from multiple classification models.
+
+1. Hard Voting:
+-> Uses predicted class labels.
+-> Final class = Class receiving maximum votes.
+
+Example:
+-> Logistic Regression = Pass.
+-> Decision Tree = Fail.
+-> KNN = Pass.
+-> Final Prediction = Pass (2 votes).
+
+2. Soft Voting:
+-> Uses predicted class probabilities.
+-> Calculates average probability for each class.
+-> Final class = Class with highest average probability.
+
+Example:
+
+             Class A    Class B
+Model 1        0.80       0.20
+Model 2        0.40       0.60
+Model 3        0.70       0.30
+
+Average Class A = (0.80 + 0.40 + 0.70) / 3 = 0.633
+
+Average Class B = (0.20 + 0.60 + 0.30) / 3 = 0.367
+
+Final Prediction = Class A.
+
+// **********            Weighted Voting          ***********
+
+Definition:
+Assigns different weights to models based on their importance.
+
+Formula:
+Weighted Probability =
+sum(weight * probability) / sum(weights)
+
+Example:
+Model 1: Probability = 0.80, Weight = 3
+Model 2: Probability = 0.40, Weight = 1
+
+Weighted Probability:
+= (0.80*3 + 0.40*1) / (3+1)
+= 0.70
+
+-> Higher weight = More influence on final prediction.
+
+// **********            Hard vs Soft Voting          ***********
+
+Hard Voting:
+-> Uses class labels.
+-> Majority voting.
+-> Does not consider prediction confidence.
+
+Soft Voting:
+-> Uses class probabilities.
+-> Considers model confidence.
+-> Requires predict_proba().
+
+Important:
+-> Soft Voting is often preferred when probability estimates are well calibrated.
+
+// **********            Python Implementation          ***********
+
+from sklearn.ensemble import VotingClassifier
+
+model = VotingClassifier(
+    estimators=[
+        ('lr', LogisticRegression()),
+        ('dt', DecisionTreeClassifier()),
+        ('knn', KNeighborsClassifier())
+    ],
+    voting='hard'    # Use 'soft' for Soft Voting
+)
+
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+
+Remember:
+Hard Voting = Majority of class labels.
+Soft Voting = Average of class probabilities.
+Weighted Voting = Different model weights.
+predict() = Class prediction.
+predict_proba() = Class probabilities.
+
+
+// **********            Voting Ensemble: Regression          ***********
+
+Definition:
+Voting Regressor combines predictions from multiple regression models
+by calculating their average.
+
+Example:
+Models:
+-> Linear Regression = 100
+-> Decision Tree = 120
+-> KNN = 110
+
+Final Prediction:
+= (100 + 120 + 110) / 3
+= 110
+
+// **********            Mathematical Formula          ***********
+
+Simple Average:
+y_pred = sum(model_predictions) / n
+
+Weighted Average:
+y_pred = sum(weight * prediction) / sum(weights)
+
+Example:
+Model 1: Prediction = 100, Weight = 2
+Model 2: Prediction = 120, Weight = 1
+Model 3: Prediction = 110, Weight = 1
+
+Weighted Prediction:
+= (100*2 + 120*1 + 110*1) / (2+1+1)
+= 107.5
+
+Important:
+-> Higher weight = More influence on final prediction.
+-> Weights are chosen based on validation performance.
+-> Voting Regressor does not automatically learn optimal weights.
+
+// **********            Python Implementation          ***********
+
+from sklearn.ensemble import VotingRegressor
+from sklearn.linear_model import LinearRegression
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.neighbors import KNeighborsRegressor
+
+model = VotingRegressor(
+    estimators=[
+        ('lr', LinearRegression()),
+        ('dt', DecisionTreeRegressor(max_depth=4)),
+        ('knn', KNeighborsRegressor())
+    ],
+    weights=[2, 1, 1]
+)
+
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+
+// **********            Voting Classifier vs Regressor          ***********
+
+Voting Classifier:
+-> Predicts categories.
+-> Uses Hard or Soft Voting.
+-> Final output = Class label.
+
+Voting Regressor:
+-> Predicts numerical values.
+-> Uses Averaging.
+-> Final output = Average prediction.
+
+Remember:
+Voting Regressor = Combines regression predictions.
+Simple Voting = Arithmetic average.
+Weighted Voting = Weighted average.
+Higher Weight = More influence.
+
+
+
+
+
+
+
+
+
+
+
+
