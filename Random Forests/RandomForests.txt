@@ -1,0 +1,722 @@
+// **********            Random Forest: Introduction          ***********
+
+Definition:
+Random Forest is an Ensemble Learning algorithm that combines
+multiple Decision Trees to produce a final prediction.
+
+Core Idea:
+Random Forest = Bagging + Random Feature Selection.
+
+-> Each tree is trained on a different bootstrap sample.
+-> At every node, a random subset of features is selected.
+-> Best split is chosen only from those selected features.
+-> Multiple trees produce diverse predictions.
+
+// **********            How Random Forest Works          ***********
+
+1. Generate different bootstrap samples from training data.
+2. Train a Decision Tree on each sample.
+3. At every node, randomly select a subset of features.
+4. Find the best split among the selected features.
+5. Grow multiple trees independently.
+6. Combine predictions to get the final output.
+
+// **********            Random Feature Selection          ***********
+
+Example:
+Original features:
+[Age, Salary, Experience, Credit Score, Location]
+
+Node 1:
+-> Randomly selects [Age, Credit Score].
+
+Node 2:
+-> Randomly selects [Salary, Experience].
+
+Node 3:
+-> Randomly selects [Location, Age].
+
+Important:
+-> Feature selection happens at every node split.
+-> Different nodes can receive different feature subsets.
+-> max_features controls the number of candidate features.
+
+// **********            Prediction Aggregation          ***********
+
+Classification:
+-> Majority Voting.
+-> Final class = Most frequently predicted class.
+
+Regression:
+-> Averaging.
+-> Final prediction = Mean of all tree predictions.
+
+// **********            Decision Tree vs Random Forest          ***********
+
+Decision Tree:
+-> Uses a single tree.
+-> Can overfit easily.
+-> Makes predictions using one model.
+
+Random Forest:
+-> Combines multiple trees.
+-> Usually provides more stable predictions.
+-> Reduces correlation using random feature selection.
+-> Combines predictions using voting or averaging.
+
+// **********            Python Implementation          ***********
+
+// Random Forest Classifier
+
+from sklearn.ensemble import RandomForestClassifier
+
+model = RandomForestClassifier(
+    n_estimators=100,
+    max_features="sqrt",
+    bootstrap=True,
+    random_state=42,
+    n_jobs=-1
+)
+
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+
+
+// Random Forest Regressor
+
+from sklearn.ensemble import RandomForestRegressor
+
+model = RandomForestRegressor(
+    n_estimators=100,
+    max_features=0.5,
+    bootstrap=True,
+    random_state=42,
+    n_jobs=-1
+)
+
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+
+// **********            Important Points          ***********
+
+-> Bootstrap Sampling = Diversity through different training rows.
+-> Random Feature Selection = Diversity through different features.
+-> max_features = Controls candidate features at each split.
+-> n_estimators = Number of Decision Trees.
+-> Classification = Majority Voting.
+-> Regression = Averaging.
+
+Remember:
+Random Forest = Multiple Decision Trees + Bagging + Random Features.
+Main Benefit = More diverse trees and reduced variance.
+
+// **********            Random Forest: Bias-Variance Trade-off          ***********
+
+Problem with Decision Trees:
+-> Usually Low Bias + High Variance.
+-> Small changes in training data can create very different trees.
+
+How Random Forest Solves This:
+-> Combines predictions from multiple Decision Trees.
+-> Averaging reduces variance.
+-> Random feature selection reduces correlation between trees.
+-> Produces more stable predictions.
+
+// **********            Bias and Variance          ***********
+
+Bias:
+-> Error due to overly simple model assumptions.
+-> High Bias = Underfitting.
+-> Low Bias = Can capture complex patterns.
+
+Variance:
+-> Measures how much predictions change across different training datasets.
+-> High Variance = Model is sensitive to training data.
+-> Low Variance = More stable predictions.
+
+Bias-Variance Decomposition (Squared Error):
+
+Expected Error = Bias² + Variance + Irreducible Noise
+
+// **********            Mathematical Intuition          ***********
+
+Variance of Random Forest (Average of B Trees):
+
+Var(Forest) = ρσ² + ((1-ρ)σ² / B)
+
+Where:
+-> B = Number of trees.
+-> σ² = Variance of individual tree predictions.
+-> ρ = Average correlation between trees.
+
+Important Cases:
+
+1. Independent Trees (ρ = 0):
+   Variance = σ² / B
+   -> More trees reduce variance.
+
+2. Fully Correlated Trees (ρ = 1):
+   Variance = σ²
+   -> No variance reduction.
+
+Conclusion:
+-> Lower correlation = Greater variance reduction.
+-> Averaging alone is less effective when trees are highly correlated.
+
+// **********            Why Random Feature Selection?          ***********
+
+Random Forest creates diversity using:
+
+1. Bootstrap Sampling:
+-> Different trees receive different training samples.
+
+2. Random Feature Selection:
+-> Each node considers a random subset of features.
+-> Reduces correlation between trees.
+
+Random Forest = Bagging + Random Feature Selection.
+
+// **********            Effect of Number of Trees          ***********
+
+-> Few trees = Less stable predictions.
+-> More trees = Generally lower variance.
+-> Eventually performance reaches a plateau.
+-> More trees increase computational cost.
+-> Adding trees does not typically cause overfitting.
+
+// **********            Decision Tree vs Random Forest          ***********
+
+Decision Tree:
+-> Usually Low Bias, High Variance.
+
+Random Forest:
+-> Usually Low Bias, Reduced Variance.
+-> More stable predictions.
+-> Better generalization in many cases.
+
+Remember:
+Averaging = Reduces Variance.
+Random Features = Reduces Correlation.
+More Trees = More Stable Predictions.
+Random Forest performs well by combining diverse trees.
+
+
+// **********            Bagging vs Random Forest          ***********
+
+Definition:
+Bagging combines multiple models trained on different bootstrap
+samples. Random Forest is an extension of Bagging that uses
+Decision Trees with random feature selection.
+
+// **********            Limitation of Bagging          ***********
+
+-> Different bootstrap samples create different trees.
+-> But trees may select the same dominant features.
+-> This can make trees highly correlated.
+-> Highly correlated trees provide less variance reduction.
+
+// **********            How Random Forest Improves?          ***********
+
+-> Uses Bootstrap Sampling (different rows).
+-> Uses Random Feature Selection (different candidate features).
+-> Reduces correlation between trees.
+-> Improves variance reduction and prediction stability.
+
+// **********            Feature Selection Difference          ***********
+
+Bagging with Decision Trees:
+-> Randomly selects a feature subset for each tree.
+-> Selected subset remains fixed throughout that tree.
+-> Controlled by max_features.
+
+Random Forest:
+-> Randomly selects candidate features at every node.
+-> A fresh subset is selected at each split.
+-> Best split is chosen from those candidates.
+-> Controlled by max_features.
+
+Example:
+Total features = 10
+max_features = 4
+
+-> Root node: Select 4 from original 10.
+-> Child node: Again select 4 from original 10.
+-> Grandchild: Again select 4 from original 10.
+
+Important:
+-> Selection is always from the original feature set.
+-> Previous selections are not permanently removed.
+-> A feature can be selected again at another node.
+
+// **********            Complete Comparison          ***********
+
+Bagging:
+-> Can use different base estimators.
+-> Uses bootstrap or pasting for row sampling.
+-> Feature sampling is optional.
+-> Feature subset is selected per estimator.
+
+Random Forest:
+-> Uses Decision Trees.
+-> Usually uses bootstrap sampling.
+-> Random feature selection at every node.
+-> Generally produces less-correlated trees.
+
+// **********            Python Implementation          ***********
+
+// Bagging Classifier
+
+from sklearn.ensemble import BaggingClassifier
+from sklearn.tree import DecisionTreeClassifier
+
+bag = BaggingClassifier(
+    estimator=DecisionTreeClassifier(),
+    n_estimators=100,
+    max_samples=0.8,
+    max_features=0.5,
+    bootstrap=True,
+    random_state=42
+)
+
+bag.fit(X_train, y_train)
+
+
+// Random Forest
+
+from sklearn.ensemble import RandomForestClassifier
+
+rf = RandomForestClassifier(
+    n_estimators=100,
+    max_features="sqrt",
+    bootstrap=True,
+    random_state=42,
+    n_jobs=-1
+)
+
+rf.fit(X_train, y_train)
+
+// **********            Prediction Aggregation          ***********
+
+Bagging Classifier:
+-> Majority voting by default.
+
+Random Forest Classifier:
+-> Averages class probabilities and selects the highest.
+
+Both Regressors:
+-> Average numerical predictions.
+
+// **********            Remember          ***********
+
+Bagging = Bootstrap Sampling + Aggregation.
+
+Random Forest = Bagging with Decision Trees + Random Features.
+
+Bagging Feature Selection = Per estimator.
+Random Forest Feature Selection = At every node.
+
+Main Benefit of Random Forest:
+Reduced correlation between trees -> Better variance reduction.
+
+// **********            Random Forest Hyperparameters          ***********
+
+n_estimators:
+-> Number of Decision Trees in the forest.
+
+criterion:
+-> Measures split quality.
+-> Classification: gini, entropy, log_loss.
+-> Regression: squared_error, absolute_error, etc.
+
+max_depth:
+-> Maximum depth of each tree.
+-> Controls tree complexity.
+
+min_samples_split:
+-> Minimum samples required to split a node.
+
+min_samples_leaf:
+-> Minimum samples required in a leaf.
+
+max_features: ⭐
+-> Number of random candidate features at each node.
+-> "sqrt", "log2", None, integer or fraction.
+-> Controls diversity between trees.
+
+bootstrap:
+-> True = Sampling with replacement.
+-> False = Uses the full dataset for each tree.
+
+max_samples:
+-> Number or proportion of rows per tree.
+-> Used when bootstrap=True.
+
+oob_score:
+-> Enables Out-of-Bag evaluation.
+-> Requires bootstrap=True.
+
+Other Parameters:
+-> n_jobs = Parallel execution; -1 uses all cores.
+-> random_state = Reproducibility.
+-> ccp_alpha = Controls pruning.
+
+// **********            Important Points          ***********
+
+-> Increasing n_estimators generally improves stability.
+-> Lower max_depth = Simpler trees.
+-> Higher min_samples_leaf = Less complex trees.
+-> Lower max_features = More feature randomness.
+-> Tune parameters using GridSearchCV or RandomizedSearchCV.
+
+Remember:
+n_estimators = Number of trees.
+max_features = Random features per split.
+max_depth = Tree complexity.
+max_samples = Bootstrap sample size.
+
+
+// **********            Random Forest: Hyperparameter Tuning          ***********
+
+Goal:
+Find the best hyperparameter combination to improve model generalization.
+
+Two Techniques:
+1. GridSearchCV = Tests every specified combination.
+2. RandomizedSearchCV = Tests a fixed number of randomly selected combinations.
+
+// **********            GridSearchCV          ***********
+
+Definition:
+Tests all possible combinations from the given parameter grid
+using cross-validation.
+
+Example:
+n_estimators = [100, 200]
+max_depth = [10, 20]
+
+Total combinations = 2 * 2 = 4
+
+With cv=5:
+Total model fits = 4 * 5 = 20
+
+Python:
+from sklearn.model_selection import GridSearchCV
+
+grid = GridSearchCV(
+    RandomForestClassifier(random_state=42),
+    param_grid={
+        'n_estimators': [100, 200],
+        'max_depth': [10, 20]
+    },
+    cv=5,
+    n_jobs=-1
+)
+
+grid.fit(X_train, y_train)
+
+// **********            RandomizedSearchCV          ***********
+
+Definition:
+Randomly selects a fixed number of hyperparameter combinations
+instead of testing every combination.
+
+Important:
+-> n_iter = Number of combinations to test.
+-> param_distributions = Parameters and their possible values
+   or probability distributions.
+-> Useful for large search spaces.
+
+Python:
+from sklearn.model_selection import RandomizedSearchCV
+from scipy.stats import randint
+
+search = RandomizedSearchCV(
+    RandomForestClassifier(random_state=42),
+    param_distributions={
+        'n_estimators': randint(100, 500),
+        'max_depth': [None, 10, 20],
+    },
+    n_iter=20,
+    cv=5,
+    random_state=42,
+    n_jobs=-1
+)
+
+search.fit(X_train, y_train)
+
+// **********            GridSearchCV vs RandomizedSearchCV          ***********
+
+GridSearchCV:
+-> Tests all specified combinations.
+-> Uses param_grid.
+-> Suitable for smaller search spaces.
+
+RandomizedSearchCV:
+-> Tests randomly selected combinations.
+-> Uses param_distributions.
+-> Uses n_iter to control search budget.
+-> Suitable for larger search spaces.
+
+// **********            Important Attributes          ***********
+
+best_params_:
+-> Best hyperparameter combination.
+
+best_score_:
+-> Best average cross-validation score.
+
+best_estimator_:
+-> Best fitted model.
+
+// **********            Final Model Evaluation          ***********
+
+best_model = search.best_estimator_
+
+y_pred = best_model.predict(X_test)
+
+-> Tune using training data and cross-validation.
+-> Evaluate final model on unseen test data.
+-> Never use test data during hyperparameter tuning.
+
+Remember:
+GridSearchCV = Exhaustive Search.
+RandomizedSearchCV = Random Search.
+cv = Cross-validation folds.
+n_iter = Number of random combinations.
+
+// **********            OOB Score in Random Forest          ***********
+
+Definition:
+Evaluates a sample using only trees that did not train on that sample.
+
+Working:
+-> Each tree leaves some bootstrap samples unused.
+-> Unused samples = Out-of-Bag samples.
+-> Predict each sample using its OOB trees.
+-> Compare predictions with actual values.
+
+Python:
+RandomForestClassifier(
+    n_estimators=100,
+    bootstrap=True,
+    oob_score=True,
+    random_state=42
+)
+
+model.fit(X_train, y_train)
+print(model.oob_score_)
+
+Important:
+-> bootstrap=True is required.
+-> oob_score_ = OOB evaluation score.
+-> Classification default = Accuracy.
+-> Regression default = R².
+-> OOB evaluation does not replace final test evaluation.
+
+
+// **********            Feature Importance          ***********
+
+Definition:
+Feature Importance measures the relative contribution of
+each feature to a trained model's predictions.
+
+Example:
+Area = 0.50
+Location = 0.30
+Bedrooms = 0.15
+Age = 0.05
+
+-> Area contributes the most to impurity reduction.
+-> Age contributes the least.
+
+Important:
+-> Higher value = Greater contribution to impurity reduction.
+-> Importance values normally sum to 1.
+-> It does not represent the percentage of predictions
+   caused by a feature.
+
+// **********            Feature Importance in Decision Trees          ***********
+
+Method:
+MDI (Mean Decrease in Impurity).
+
+Core Idea:
+-> Every time a feature is used for splitting, calculate
+   the impurity reduction.
+-> Weight the reduction by the proportion of samples
+   reaching that node.
+-> Add contributions from all nodes using that feature.
+-> Normalize importance values so their sum becomes 1.
+
+// **********            Impurity Reduction Formula          ***********
+
+Weighted Impurity Reduction:
+
+Contribution =
+(N_node / N_total) * [
+    I_parent
+    - (N_left/N_node * I_left
+       + N_right/N_node * I_right)
+]
+
+Where:
+-> N_node = Samples reaching the parent node.
+-> N_total = Total training samples.
+-> I_parent = Parent impurity.
+-> I_left, I_right = Child impurities.
+-> N_left, N_right = Child sample counts.
+
+// **********            Numerical Example          ***********
+
+Suppose the root node contains 100 samples.
+
+Parent Gini = 0.5
+
+Left:
+-> 60 samples, Gini = 0.2
+
+Right:
+-> 40 samples, Gini = 0.3
+
+Weighted Child Gini:
+= (60/100 * 0.2) + (40/100 * 0.3)
+= 0.24
+
+Impurity Reduction:
+= 0.5 - 0.24
+= 0.26
+
+Feature A contribution = 0.26.
+
+// **********            Importance of Child Node Splits          ***********
+
+Suppose Feature B splits the left child:
+
+Parent Gini = 0.2
+Left Grandchild: 30 samples, Gini = 0.1
+Right Grandchild: 30 samples, Gini = 0.15
+
+Local Impurity Reduction:
+= 0.2 - (0.5 * 0.1 + 0.5 * 0.15)
+= 0.075
+
+Weighted Contribution:
+= (60/100) * 0.075
+= 0.045
+
+Feature B contribution = 0.045.
+
+// **********            Normalizing Feature Importance          ***********
+
+Total Contribution = 0.26 + 0.045 = 0.305
+
+Feature A:
+= 0.26 / 0.305
+= 0.8525 = 85.25%
+
+Feature B:
+= 0.045 / 0.305
+= 0.1475 = 14.75%
+
+Conclusion:
+-> Feature A is more important because it produces
+   greater weighted impurity reduction.
+-> Repeat this calculation across all tree nodes.
+-> Normalize the final contributions.
+
+// **********            Feature Importance in Random Forest          ***********
+
+-> Every Decision Tree calculates its own feature importance.
+-> Random Forest averages importance across all trees.
+-> Final importance values are normalized.
+
+Example:
+
+              Tree 1   Tree 2   Tree 3
+Area           0.60     0.50     0.40
+Location       0.30     0.30     0.40
+Bedrooms       0.10     0.20     0.20
+
+Final Importance:
+
+Area:
+= (0.60 + 0.50 + 0.40) / 3 = 0.50
+
+Location:
+= (0.30 + 0.30 + 0.40) / 3 = 0.333
+
+Bedrooms:
+= (0.10 + 0.20 + 0.20) / 3 = 0.167
+
+// **********            Scikit-learn Implementation          ***********
+
+from sklearn.ensemble import RandomForestClassifier
+import pandas as pd
+
+model = RandomForestClassifier(
+    n_estimators=100,
+    random_state=42
+)
+
+model.fit(X_train, y_train)
+
+importance = pd.Series(
+    model.feature_importances_,
+    index=X_train.columns
+)
+
+print(importance.sort_values(ascending=False))
+
+Important:
+-> feature_importances_ = Returns feature importance values.
+-> Higher value = Greater impurity reduction contribution.
+-> Same attribute is available for Decision Trees.
+
+// **********            Limitations of MDI          ***********
+
+1. High Cardinality Bias:
+-> Features with many unique values can receive
+   artificially high importance.
+
+2. Correlated Features:
+-> Importance may be divided between correlated features.
+-> One feature may receive more importance than another.
+
+3. Interpretation:
+-> Importance does not indicate positive or negative influence.
+-> It does not prove causation.
+
+// **********            Permutation Feature Importance          ***********
+
+Alternative to MDI.
+
+Working:
+1. Calculate original model performance.
+2. Randomly shuffle one feature.
+3. Calculate performance again.
+4. Measure performance decrease.
+
+Interpretation:
+-> Larger performance decrease = Model relies more on that feature.
+-> Useful for evaluating feature importance on unseen data.
+
+// **********            Final Remember Points          ***********
+
+MDI = Mean Decrease in Impurity.
+
+Decision Tree:
+-> Weighted impurity reduction across nodes.
+
+Random Forest:
+-> Average feature importance across trees.
+
+feature_importances_:
+-> Scikit-learn attribute for feature importance.
+
+Limitations:
+-> High-cardinality bias.
+-> Correlated features.
+-> Does not indicate causation or direction.
+
+Alternative:
+Permutation Importance = Measures performance drop after shuffling.
