@@ -1,0 +1,129 @@
+// **********            SVM: Hard Margin          ***********
+
+Definition: Hard Margin SVM finds the maximum-margin hyperplane while ensuring every training data point is correctly classified.
+
+Core idea:
+-> No misclassification is allowed.
+-> Data must be perfectly linearly separable.
+-> SVM tries to maximize the margin.
+
+Hyperplane Equations:
+-> Decision boundary: w^T*x + b = 0
+-> Positive margin: w^T*x + b = 1
+-> Negative margin: w^T*x + b = -1
+
+Classification:
+-> Positive class (+1): w^T*x + b >= 1
+-> Negative class (-1): w^T*x + b <= -1
+
+Combined constraint:
+y_i * (w^T*x_i + b) >= 1
+
+Margin:
+-> Total margin width = 2 / ||w||
+-> SVM maximizes margin by minimizing ||w||.
+
+Optimization Problem:
+
+Objective:
+Minimize: (1/2) * ||w||^2
+
+Subject to:
+y_i * (w^T*x_i + b) >= 1
+
+Why 1/2?
+-> Makes mathematical differentiation simpler.
+-> Does not change the optimal solution.
+
+Important points:
+-> Every training point must be correctly classified.
+-> Support vectors lie exactly on the margin boundaries.
+-> Even one noisy or incorrectly placed point can make the problem infeasible.
+-> Cannot handle overlapping classes.
+-> Not suitable for many real-world datasets containing noise.
+
+Remember:
+Hard Margin = Maximum Margin + Zero Misclassification
+              + Perfectly Linearly Separable Data.
+
+
+
+// **********            SVM: Soft Margin (The C Setting)          ***********
+
+Problem: Real-world datasets contain noise, outliers and overlapping classes. Hard Margin SVM cannot handle these because it requires perfect separation.
+
+Definition: Soft Margin SVM finds a maximum-margin hyperplane while allowing some data points to violate the margin constraints.
+
+Core idea:
+-> Allows points inside the margin.
+-> Can tolerate misclassification.
+-> Balances margin maximization and classification errors.
+
+Slack Variables (ξ):
+Definition: Slack variables measure how much a data point violates the margin constraint.
+
+Hard Margin:
+y_i * (w^T*x_i + b) >= 1
+
+Soft Margin:
+y_i * (w^T*x_i + b) >= 1 - ξ_i
+
+Where:
+-> ξ >= 0
+-> ξ = 0: Correctly classified, outside or on margin.
+-> 0 < ξ < 1: Inside margin but correctly classified.
+-> ξ = 1: On decision boundary.
+-> ξ > 1: Misclassified.
+
+C Parameter:
+Definition: C is a regularization parameter that controls the trade-off between maximizing margin and minimizing classification violations.
+
+Optimization:
+Minimize: (1/2) * ||w||^2 + C * sum(ξ_i)
+
+Subject to:
+y_i * (w^T*x_i + b) >= 1 - ξ_i
+ξ_i >= 0
+
+Understanding the objective:
+-> (1/2) * ||w||^2 = Tries to maximize the margin.
+-> C * sum(ξ_i) = Penalizes margin violations.
+-> C controls how strongly violations are penalized.
+
+High C:
+-> Strongly penalizes violations.
+-> Tries to classify training points correctly.
+-> Usually produces a narrower margin.
+-> Less regularization, higher chance of overfitting.
+
+Low C:
+-> Allows more margin violations.
+-> Gives more importance to a wider margin.
+-> More regularization, higher chance of underfitting if too small.
+
+Hard Margin vs Soft Margin:
+-> Hard Margin = Zero violations, no slack variables.
+-> Soft Margin = Allows violations, uses slack variables.
+-> Hard Margin = Perfectly separable data required.
+-> Soft Margin = Can handle overlapping and noisy data.
+-> Soft Margin uses C parameter.
+
+Code:
+from sklearn.svm import SVC
+
+model = SVC(kernel="linear", C=1.0)   # C controls violation penalty
+
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+
+Important points:
+-> Default C in sklearn SVC = 1.0.
+-> High C = Strong error penalty.
+-> Low C = More tolerance for violations.
+-> C is a hyperparameter and can be tuned using cross-validation.
+
+Remember:
+Soft Margin = Maximum Margin + Slack Variables + C Parameter.
+
+High C = Less tolerance for violations.
+Low C = More tolerance for violations.

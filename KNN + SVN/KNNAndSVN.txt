@@ -1,75 +1,129 @@
-// **********            K Nearest Neighbors (KNN)          ***********
+// **********            K-Nearest Neighbors (KNN)          ***********
 
-Definition: KNN predicts a new row by looking at its K closest rows in the training data. Those neighbors vote (classification) or give an average (regression).
+Definition: KNN is a supervised ML algorithm that predicts a new data point using its K nearest training data points.
 
-Why: It is the simplest way to predict. "Ask the nearest neighbors." Example: you move to a new street and want to guess if people like loud music. Ask the 5 nearest houses. If 4 say yes, guess yes.
+Core idea: Similar data points are likely to belong to the same class.
 
-The 4 steps:
--> 1) Choose K (ex: 5).
--> 2) Measure the distance from the new row to EVERY training row.
--> 3) Pick the K closest rows.
--> 4) Classification = majority vote. Regression = average of their numbers.
+How it works:
+-> Choose K (number of neighbours).
+-> Calculate distance between the new point and existing points.
+-> Find K nearest neighbours.
+-> Classification = Majority voting.
+-> Regression = Average of neighbours.
 
-Lazy learner:
--> No training. It only stores the data. All the work happens when we predict.
--> This is instance-based learning (we must keep the training data).
+Distance Metrics:
+-> Euclidean: Straight-line distance.
+   d = sqrt(sum((x1 - x2)^2))
+
+-> Manhattan: Horizontal + vertical distance.
+   d = sum(abs(x1 - x2))
+
+-> Minkowski: Generalized distance.
+   p = 1 -> Manhattan
+   p = 2 -> Euclidean
 
 Choosing K:
--> K = 1: follows one neighbor only. One odd row changes the answer. Overfitting (high variance).
--> Large K: everyone votes, answer is too smooth. Underfitting (high bias).
--> For 2 classes use an odd K (3, 5, 7), so there is no tie.
--> Start with K = 5 or about sqrt(n). Choose the best K with cross-validation.
+-> Small K = High variance, Low bias -> Overfitting.
+-> Large K = Low variance, High bias -> Underfitting.
+-> Odd K is preferred for binary classification to reduce ties.
 
-Distance and scaling:
--> Default is Euclidean (straight line). Manhattan is also possible.
--> Scale the columns first. This is the most important rule. A column with big numbers (salary) will decide everything, and a column with small numbers (age) will be ignored.
+Feature Scaling:
+-> KNN is distance-based, so features with larger numerical ranges can dominate distance calculations.
+-> Use StandardScaler or MinMaxScaler before applying KNN.
 
-Weights:
--> weights = "uniform" (default): every neighbor has 1 vote.
--> weights = "distance": a closer neighbor has more say.
+Types:
+-> Classification: Majority voting to predict a category.
+-> Regression: Average of neighbours to predict a numerical value.
 
-Regression:
--> Same steps, but take the average. Example: 3 nearest students got 60, 40, 50 marks. Prediction = (60 + 40 + 50) / 3 = 50.
+Important characteristics:
+-> Instance-Based Learning: Uses stored training examples for prediction.
+-> Lazy Learning: No explicit model building; most computation happens during prediction.
+-> Non-Parametric: Does not assume a fixed mathematical equation.
+-> Curse of Dimensionality: As features increase, distance comparisons become less informative.
 
 Important points:
--> Slow predictions on big data (compares with all rows). Uses a lot of memory.
--> Curse of dimensionality: with many columns, all points look far away and "nearest" loses meaning.
--> Sensitive to scale and to useless columns (they add noise to the distance).
--> Imbalanced data: the big class wins most votes. Use weights="distance" or resample.
--> Used for: recommendations, similar-item search, strange-row detection, KNNImputer (fill missing values).
+-> KNN requires storing training data.
+-> Prediction can be slow on large datasets.
+-> Sensitive to noise, irrelevant features and feature scaling.
+-> Choosing the right K is important.
 
-Industry standard:
--> Always use a Pipeline: StandardScaler, then KNN. No data leakage.
--> Tune K, weights and distance with GridSearchCV.
--> Cut columns first (remove useless ones, or PCA).
--> Big data: approximate nearest neighbor tools (FAISS, Annoy). Modern search and recommendation use embeddings with nearest-neighbor search.
--> Classic KNN is mostly used as a baseline. If it does not clearly beat a simple model, choose the simpler and faster one.
+Code:
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
 
-Code (own small data):
-students = pd.DataFrame({
-    "study_hours": [1, 2, 2, 3, 3, 4, 5, 6, 6, 7, 8, 9],
-    "sleep_hours": [4, 5, 8, 5, 7, 6, 6, 8, 5, 7, 6, 8],
-    "passed":      [0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1],
-    "marks":       [30, 35, 40, 45, 60, 50, 55, 70, 68, 75, 85, 90],
-})
-X = students[["study_hours", "sleep_hours"]]
-y = students["passed"]
-new = pd.DataFrame({"study_hours": [3.2], "sleep_hours": [7.2]})
+model = make_pipeline(
+    StandardScaler(),
+    KNeighborsClassifier(n_neighbors=5)
+)
 
-model = make_pipeline(StandardScaler(), KNeighborsClassifier(n_neighbors=5))
-model.fit(X, y)                                 # only stores the data
-model.predict(new)                              # [0]
-model.predict_proba(new)                        # [[0.6 0.4]]
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
 
-dist, idx = model[-1].kneighbors(model[0].transform(new))      # the 5 neighbors and their distances
+Remember:
+KNN = Distance Calculation + K Nearest Neighbours
+      + Majority Voting / Average Prediction.
 
-# K = 1 says pass (odd row decides), K = 3 and 5 say fail
-# weights="distance" flips it back to pass, because the nearest neighbor is only 0.17 away
-KNeighborsClassifier(n_neighbors=5, weights="distance")
 
-# regression: average of the 3 nearest
-reg = make_pipeline(StandardScaler(), KNeighborsRegressor(n_neighbors=3)).fit(X, students["marks"])
-reg.predict(new)                                # [50.]
 
+
+// **********            SVM: Geometric Intuition          ***********
+
+Definition: Support Vector Machine (SVM) is a supervised ML algorithm that finds the best decision boundary to separate different classes.
+
+Core idea: Find a hyperplane that separates classes with the maximum possible margin.
+
+Hyperplane:
+-> Decision boundary that separates different classes.
+-> 1D = Point
+-> 2D = Line
+-> 3D = Plane
+-> Higher dimensions = Hyperplane
+
+Equation:
+w^T * x + b = 0
+
+-> w = Weights (control orientation)
+-> x = Input features
+-> b = Bias (controls position)
+
+Margin:
+Definition: Margin is the distance between the two parallel boundaries passing through the nearest points of both classes.
+
+-> SVM tries to maximize the margin.
+-> Larger margin generally helps generalization.
+-> Total margin width = 2 / ||w||
+-> Distance from hyperplane to each margin boundary = 1 / ||w||
+
+Understanding the Image:
+-> Black solid line = Optimal separating hyperplane (w^T*x + b = 0).
+-> Upper dashed line = Positive margin boundary (w^T*x + b = 1).
+-> Lower dashed line = Negative margin boundary (w^T*x + b = -1).
+-> Blue squares = Positive class (+1).
+-> Orange circles = Negative class (-1).
+-> Circled data points = Support vectors.
+-> Distance between the two dashed lines = Maximum margin width.
+
+Support Vectors:
+Definition: Support vectors are the data points closest to the decision boundary.
+
+-> They determine the position and orientation of the optimal hyperplane.
+-> Moving non-support-vector points generally does not change the boundary.
+-> Moving support vectors can change the boundary.
+
+Maximum Margin Classifier:
+-> Multiple hyperplanes may separate the classes.
+-> SVM chooses the hyperplane with the maximum margin.
+-> Maximizing margin = Minimizing ||w||.
+
+Important points:
+-> SVM is a supervised learning algorithm.
+-> Hyperplane = Decision boundary.
+-> Margin = Separation between the two margin boundaries.
+-> Support vectors = Closest data points.
+-> SVM supports classification (SVC) and regression (SVR).
+
+Remember:
+SVM = Best separating hyperplane + Maximum margin + Support vectors.
 
 
